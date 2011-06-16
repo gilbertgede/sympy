@@ -165,37 +165,47 @@ class Kane(object):
         uis += uds
         n = len(uis)
 
+        rsts = []
+        for i, v in enumerate(bl):
+            if isinstance(v, RigidBody):
+                om = v.frame.ang_vel_in(N).subs(self._kd)
+                ve = v.mc.vel(N).subs(self._kd)
+                if v.mass.diff(Symbol('t')) != 0:
+                    r = (v.mass * ve).dt(N)
+                else:
+                    r = v.mass * v.mc.acc(N).subs(self._kd)
+                I, p = v.inertia
+                if p != v.mc:
+                    pass
+                    #redefine I
+                if I.dt(v.frame) != 0:
+                    t = (I & om).diff(Symbol('t'), N)
+                else:
+                    t = ((v.frame.ang_acc_in(N).subs(self._kd) & I) +
+                         ((om ^ I) & om))
+            elif isinstance(v, Particle):
+                ve = v.point.vel(N).subs(self._kd)
+                if v.mass.diff(Symbol('t')) != 0:
+                    r = (v.mass * ve).dt(N)
+                else:
+                    r = w.mass * v.point.acc(N).subs(self._kd)
+                t = 0
+            else:
+                raise TypeError('The body list needs RigidBody or '
+                                'Particle as list elements')
+            rsts.append((r, t))
         FRSTAR = zeros((n, 1))
         for i, v in enumerate(uis):
             for j, w in enumerate(bl):
                 if isinstance(w, RigidBody):
                     om = w.frame.ang_vel_in(N).subs(self._kd)
                     ve = w.mc.vel(N).subs(self._kd)
-                    if w.mass.diff(Symbol('t')) != 0:
-                        r = (w.mass * ve).dt(N)
-                    else:
-                        r = w.mass * ve
-                    r = r & ve.diff(v, N)
-                    I, p = w.inertia
-                    if p != w.mc:
-                        pass
-                        #redefine I
-                    if I.dt(w.frame) != 0:
-                        t = (I & om).diff(Symbol('t'), N)
-                    else:
-                        t = ((w.frame.ang_acc_in(N).subs(self._kd) & I) +
-                             ((om ^ I) & om))
-                    t = t & om.diff(v, N)
+                    r = rsts[j][0] & ve.diff(v, N)
+                    t = rsts[j][1] & om.diff(v, N)
                     FRSTAR[i] -= (r + t)
                 elif isinstance(w, Particle):
-                    traspeed = w.mc.vel(N).subs(self._kd).diff(v)
-                    r = w.mass * w.mc.vel(N).subs(self._kd)
-                    r = r.diff(Symbol('t'))
-                    r = r & traspeed
-                    FRSTAR[i] -= traspeed & r
-                else:
-                    raise TypeError('The body list needs RigidBody or '
-                                    'Particle as list elements')
+                    ve = w.mc.vel(N).subs(self._kd)
+                    FRSTAR[i] -= rsts[j][0] & ve.diff(v, N)
         if len(uds) != 0:
             m = len(uds)
             p = n - m

@@ -1,7 +1,7 @@
 __all__ = ['ReferenceFrame', 'Vector', 'Dyad']
 
 from sympy import (Matrix, Symbol, sin, cos, eye, trigsimp, diff, sqrt, sympify,
-                   expand, S)
+                   expand, S, zeros)
 from sympy.core.numbers import Zero
 
 class Dyad(object):
@@ -1217,8 +1217,12 @@ class Vector(object):
             if v[1] == otherframe:
                 outvec += Vector([(v[0].diff(wrt), otherframe)])
             else:
-                diffed = (Vector([v]).express(otherframe)).args[0][0].diff(wrt)
-                outvec += Vector([(diffed, otherframe)]).express(v[1])
+                if otherframe.dcm(v[1]).diff(wrt) == zeros((3, 3)):
+                    d = v[0].diff(wrt)
+                    outvec += Vector([(d, v[1])])
+                else:
+                    d = (Vector([v]).express(otherframe)).args[0][0].diff(wrt)
+                    outvec += Vector([(d, otherframe)]).express(v[1])
         return outvec
 
     def dt(self, otherframe):
