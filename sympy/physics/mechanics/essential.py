@@ -42,7 +42,7 @@ class Dyad(object):
         i = 0
         # This code is to remove empty parts from the list
         while i < len(self.args):
-            if ((self.args[i][0] == 0) | (self.args[i][1] == 0) | 
+            if ((self.args[i][0] == 0) | (self.args[i][1] == 0) |
                 (self.args[i][2] == 0)):
                 self.args.remove(self.args[i])
                 i -= 1
@@ -330,7 +330,7 @@ class Dyad(object):
         >>> d = outer(N.x, N.x)
         >>> d.dt(B)
         (-qd)*ny>nx> + (-qd)*nx>ny>
- 
+
         """
 
         self._check_frame(frame)
