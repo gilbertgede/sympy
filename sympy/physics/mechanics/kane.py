@@ -183,8 +183,13 @@ class Kane(object):
                     r = v.mass * v.mc.acc(N).subs(self._kd)
                 I, p = v.inertia
                 if p != v.mc:
-                    pass
-                    #redefine I
+                    # redefine I about mass center
+                    # have I S/O, want I S/S*
+                    # I S/O = I S/S* + I S*/O; I S/S* = I S/O - I S*/O
+                    f = v.frame
+                    d = v.mc.pos_from(p)
+                    I -= m * (((f.x | f.x) + (f.y | f.y) + (f.z | f.z)) *
+                              (d & d) - (d | d))
                 if I.dt(v.frame) != 0:
                     t = (I & om).diff(Symbol('t'), N)
                 else:
