@@ -160,6 +160,9 @@ class Dyad(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __neg__(self):
+        return self * -1
+
     def __rand__(self, other):
         """The inner product operator for a Vector or Dyad, and a Dyad
 
