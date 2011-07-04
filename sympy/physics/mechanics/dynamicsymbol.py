@@ -1,8 +1,8 @@
 __all__ = ['DynamicSymbol']
 
-from sympy import Symbol, S
+from sympy import Symbol, S, Function
 
-class DynamicSymbol(Symbol):
+class DynamicSymbol(Function):
     """A symbol implicitly dependent upon time.
 
     DynamicSymbol behaves just like Symbol, except when it is differentitated
@@ -45,17 +45,9 @@ class DynamicSymbol(Symbol):
 
     _t = Symbol('t')
 
-    @property
-    def free_symbols(self):
-        return set([DynamicSymbol._t, self])
-
-    def _eval_derivative(self, s):
-        if s == DynamicSymbol._t:
-            return DynamicSymbol(self.name + 'd')
-        elif self == s:
-            return S.One
-        else:
-            return S.Zero
+    def __new__(cls, *args, **options):
+        outf = Function(*args, **options)
+        return outf.__call__(DynamicSymbol._t)
 
 if __name__ == "__main__":
     import doctest
