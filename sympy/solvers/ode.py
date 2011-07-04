@@ -209,7 +209,7 @@ from sympy.core.relational import Equality, Eq
 from sympy.core.symbol import Symbol, Wild, Dummy
 from sympy.core.sympify import sympify
 
-from sympy.functions import cos, exp, im, log, re, sin, sign
+from sympy.functions import cos, exp, im, log, re, sin, tan, sign, sqrt
 from sympy.matrices import wronskian
 from sympy.polys import Poly, RootOf
 from sympy.series import Order
@@ -231,7 +231,7 @@ from sympy.utilities import numbered_symbols
 # anyway).
 # "default", "all", "best", and "all_Integral" meta-hints should not be
 # included in this list, but "_best" and "_Integral" hints should be included.
-allhints = ("separable", "1st_exact", "1st_linear", "Bernoulli",
+allhints = ("separable", "1st_exact", "1st_linear", "Bernoulli", "Riccati_special_minus2",
 "1st_homogeneous_coeff_best", "1st_homogeneous_coeff_subs_indep_div_dep",
 "1st_homogeneous_coeff_subs_dep_div_indep", "nth_linear_constant_coeff_homogeneous",
 "nth_linear_constant_coeff_undetermined_coefficients",
@@ -621,6 +621,10 @@ def classify_ode(eq, func, dict=False):
     k = Wild('k', exclude=[df])
     n = Wild('n', exclude=[f(x)])
     c1 = Wild('c1', exclude=[x])
+    a2 = Wild('a2', exclude=[x, f(x), df])
+    b2 = Wild('b2', exclude=[x, f(x), df])
+    c2 = Wild('c2', exclude=[x, f(x), df])
+    d2 = Wild('d2', exclude=[x, f(x), df])
 
     eq = expand(eq)
 
@@ -665,6 +669,15 @@ def classify_ode(eq, func, dict=False):
             r['n'] = n
             matching_hints["Bernoulli"] = r
             matching_hints["Bernoulli_Integral"] = r
+
+        # Riccati special n == -2 case: a2*y'+b2*y**2+c2*y/x+d2/x**2 == 0
+        r = collect(reduced_eq, f(x), exact = True).match(a2*df + b2*f(x)**2 + c2*f(x)/x + d2/x**2)
+        if r and r[b2] != 0 and (r[c2] != 0 or r[d2] != 0):
+            r['a2'] = a2
+            r['b2'] = b2
+            r['c2'] = c2
+            r['d2'] = d2
+            matching_hints["Riccati_special_minus2"] = r
 
         # Exact Differential Equation: P(x,y)+Q(x,y)*y'=0 where dP/dy == dQ/dx
         # WITH NON-REDUCED FORM OF EQUATION
@@ -2094,6 +2107,48 @@ def ode_Bernoulli(eq, func, order, match):
     t = exp((1-r[r['n']])*C.Integral(r[r['b']]/r[r['a']],x))
     tt = (r[r['n']]-1)*C.Integral(t*r[r['c']]/r[r['a']],x)
     return Eq(f(x),((tt + C1)/t)**(1/(1-r[r['n']])))
+
+def ode_Riccati_special_minus2(eq, func, order, match):
+    r"""
+    The general Riccati equation has the form dy/dx = f(x)*y**2 + g(x)*y + h(x).
+    While it does not have a general solution [1], the "special" form,
+    dy/dx = a*y**2 - b*x**c, does have solutions in many cases [2]. This routine
+    returns a solution for a*dy/dx = b*y**2 + c*y/x + d/x**2 that is obtained by
+    using a suitable change of variables to reduce it to the special form and is
+    valid when neither a nor b are zero and either c or d is zero.
+
+    >>> from sympy.abc import x, y, a, b, c, d
+    >>> from sympy.solvers.ode import dsolve, checkodesol
+    >>> from sympy import pprint, Function
+    >>> f = Function('f')
+    >>> y = f(x)
+    >>> genform = a*y.diff(x) - (b*y**2 + c*y/x + d/x**2)
+    >>> sol = dsolve(genform, y)
+    >>> pprint(sol)
+             /                                 /        __________________      \\
+            |           __________________    |       /                2        ||
+            |          /                2     |     \/  4*b*d - (a + c)  *log(x)||
+           -|a + c - \/  4*b*d - (a + c)  *tan|C1 + ----------------------------||
+            \                                 \                 2*a             //
+    f(x) = -----------------------------------------------------------------------
+                                            2*b*x
+
+    >>> checkodesol(genform, y, sol, order=1)[0]
+    True
+
+    References:
+    [1] http://www.maplesoft.com/support/help/Maple/view.aspx?path=odeadvisor/Riccati
+    [2] http://eqworld.ipmnet.ru/en/solutions/ode/ode0106.pdf -
+        http://eqworld.ipmnet.ru/en/solutions/ode/ode0123.pdf
+    """
+
+    x = func.args[0]
+    f = func.func
+    r = match # a2*diff(f(x),x) + b2*f(x) + c2*f(x)/x + d2/x**2
+    a2, b2, c2, d2 = [r[r[s]] for s in 'a2 b2 c2 d2'.split()]
+    C1 = Symbol('C1')
+    mu = sqrt(4*d2*b2 - (a2 - c2)**2)
+    return Eq(f(x), (a2 - c2 - mu*tan(mu/(2*a2)*log(x)+C1))/(2*b2*x))
 
 def ode_Liouville(eq, func, order, match):
     r"""

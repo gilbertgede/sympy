@@ -154,6 +154,9 @@ class Function(Application, Expr):
 
     """
 
+    # Allow derivatives wrt functions.
+    _diff_wrt = True
+
     @cacheit
     def __new__(cls, *args, **options):
         # Handle calls like Function('f')
@@ -512,7 +515,7 @@ functions are not supported.')
                 nargs = self.nargs
             if not (1<=argindex<=nargs):
                 raise ArgumentIndexError(self, argindex)
-        if not self.args[argindex-1].is_Symbol:
+        if not self.args[argindex-1]._diff_wrt:
             # See issue 1525 and issue 1620 and issue 2501
             arg_dummy = C.Dummy('xi_%i' % argindex)
             return Subs(Derivative(
@@ -603,109 +606,204 @@ class Derivative(Expr):
     list of differentiation symbols will be sorted, that is, the expression is
     assumed to have continuous derivatives up to the order asked.
 
-    Examples:
+    This class also allows derivatives wrt non-Symbols that have _diff_wrt
+    set to True, such as Function and Derivative. When a derivative wrt a non-
+    Symbol is attempts, the non-Symbol is termporarily converted to a Symbol
+    while the differentiation is performed.
 
-    Derivative(Derivative(expr, x), y) -> Derivative(expr, x, y)
-    Derivative(expr, x, 3)  -> Derivative(expr, x, x, x)
-    Derivative(f(x, y), y, x, evaluate=True) -> Derivative(f(x, y), x, y)
+    Examples
+    ========
 
+    Some basic examples:
+
+        >>> from sympy import Derivative, Symbol, Function
+        >>> f = Function('f')
+        >>> g = Function('g')
+        >>> x = Symbol('x')
+        >>> y = Symbol('y')
+
+        >>> Derivative(x**2, x, evaluate=True)
+        2*x
+        >>> Derivative(Derivative(f(x,y), x), y)
+        Derivative(f(x, y), x, y)
+        >>> Derivative(f(x), x, 3)
+        Derivative(f(x), x, x, x)
+        >>> Derivative(f(x, y), y, x, evaluate=True)
+        Derivative(f(x, y), x, y)
+
+    Now some derivatives wrt functions:
+
+        >>> Derivative(f(x)**2, f(x), evaluate=True)
+        2*f(x)
+        >>> Derivative(f(g(x)), x, evaluate=True)
+        Derivative(f(g(x)), g(x))*Derivative(g(x), x)
     """
 
     is_Derivative   = True
 
+    # Allow derivatives wrt derivatives.
+    _diff_wrt = True
+
     def __new__(cls, expr, *symbols, **assumptions):
         expr = sympify(expr)
 
+        # There are no symbols, we differentiate wrt all of the free symbols
+        # in expr.
         if not symbols:
             symbols = expr.free_symbols
-
             if len(symbols) != 1:
                 raise ValueError("specify differentiation variables to differentiate %s" % expr)
 
-        # standardize symbols
+        # Standardize the symbols by sympifying them and making appending a
+        # count of 1 if there is only one symbol: diff(e,x)->diff(e,x,1).
         symbols = list(sympify(symbols))
         if not symbols[-1].is_Integer or len(symbols) == 1:
             symbols.append(S.One)
+
+        # Split the list of symbols into two separate lists:
+        # i)  A list of those that are Symbols
+        # ii) A list of those that are not Symbols but have _diff_wrt==True.
+        # Each of the lists has elements of the form (s, count) where s is the
+        # entity to diff wrt and count is the order of the derivative.
         symbol_count = []
+        non_symbol_count = []
         all_zero = True
         i = 0
         while i < len(symbols) - 1: # process up to final Integer
             s, count = symbols[i: i+2]
             iwas = i
-            if s.is_Symbol:
-                if count.is_Symbol:
-                    count = 1
-                    i += 1
-                elif count.is_Integer:
+            if s._diff_wrt:
+                # We need to test the more specific case of count being an
+                # Integer first.
+                if count.is_Integer:
                     count = int(count)
                     i += 2
+                elif count._diff_wrt:
+                    count = 1
+                    i += 1
 
             if i == iwas: # didn't get an update because of bad input
                 raise ValueError('Derivative expects Symbol [, Integer] args but got %s, %s' % (s, count))
 
-            symbol_count.append((s, count))
+            if s.is_Symbol:
+                symbol_count.append((s, count))
+            else:
+                non_symbol_count.append((s, count))
             if all_zero and not count == 0:
                 all_zero = False
 
-        # We make a special case for 0th derivative, because there
-        # is no good way to unambiguously print this.
+        # We make a special case for 0th derivative, because there is no
+        # good way to unambiguously print this.
         if all_zero:
             return expr
 
+        # Pop evaluate because it is not really an assumption and we will need
+        # to track use it carefully below.
         evaluate = assumptions.pop('evaluate', False)
 
-        # look for a quick exit if there are symbols that are not in the free symbols
+        # print "expr, evaluate: ", expr, symbol_count, non_symbol_count, evaluate
+
+        # Now handle diff wrt's that are not Symbols by temporarily making
+        # them Symbols, doing the derivative and then subbing back the
+        # original expression.
+        if non_symbol_count:
+            if evaluate:
+                back_subs = []
+                forward_subs = []
+                non_symbols = []
+                for i in range(len(non_symbol_count)):
+                    s, count = non_symbol_count[i]
+                    new_s = C.Symbol('symbol_subs_%i' % i)
+                    forward_subs.append((s, new_s))
+                    back_subs.append((new_s, s))
+                    non_symbol_count[i] = (new_s, count)
+                    non_symbols.append(new_s)
+                    non_symbols.append(sympify(count))
+                assumptions['evaluate'] = True
+                obj = Derivative(expr.subs(forward_subs), *non_symbols,
+                                 **assumptions)
+                expr = obj.subs(back_subs)
+            else:
+                symbol_count = symbol_count + non_symbol_count
+
+        # Look for a quick exit if there are symbols that are not in the free
+        # symbols.
         if evaluate:
-            if set(sc[0] for sc in symbol_count
-                  ).difference(expr.free_symbols):
+            symbol_set = set(sc[0] for sc in symbol_count)
+            if symbol_set.difference(expr.free_symbols):
                 return S.Zero
 
         # We make a generator so as to only generate a symbol when necessary.
         # If a high order of derivative is requested and the expr becomes 0
-        # after a few differentiations, then we won't need the other symbols
+        # after a few differentiations, then we won't need the other symbols.
         symbolgen = (s for s, count in symbol_count for i in xrange(count))
 
         if expr.is_commutative:
             assumptions['commutative'] = True
 
-        if (not (hasattr(expr, '_eval_derivative') and
-                 evaluate) and
-            not isinstance(expr, Derivative)):
+        # If we can't compute the derivative of expr (but we wanted to) and
+        # expr is itself not a Derivative, finish building an unevaluated
+        # derivative class by calling Expr.__new__.
+        if (not (hasattr(expr, '_eval_derivative') and evaluate) and
+           (not isinstance(expr, Derivative))):
             symbols = list(symbolgen)
+            # If we wanted to evaluate, we sort the symbols into standard
+            # order for later comparisons. This is too agressive if evaluate
+            # is False, so we don't do it in that case.
             if evaluate:
                 #TODO: check if assumption of discontinuous derivatives exist
                 symbols.sort(key=default_sort_key)
+            # Here we *don't* need to reinject evaluate into assumptions
+            # because we are done with it and it is not an assumption that
+            # Expr knows about.
             obj = Expr.__new__(cls, expr, *symbols, **assumptions)
             return obj
 
-        # compute the derivative now
-        unevaluated_symbols = []
+        # Compute the derivative now by repeatedly calling the
+        # _eval_derivative method of expr for each symbol. When this method
+        # returns None, the derivative couldn't be computed wrt that symbol
+        # and we save the symbol for later.
+        unhandled_symbols = []
         for s in symbolgen:
             obj = expr._eval_derivative(s)
             if obj is None:
-                unevaluated_symbols.append(s)
+                unhandled_symbols.append(s)
             elif obj is S.Zero:
                 return S.Zero
             else:
                 expr = obj
 
-        if not unevaluated_symbols:
+        if unhandled_symbols:
+            unhandled_symbols.sort(key=default_sort_key)
+            expr = Expr.__new__(cls, expr, *unhandled_symbols, **assumptions)
+        else:
+            # We got a Derivative at the end of it all, and we rebuild it by
+            # sorting its symbols.
             if isinstance(expr, Derivative):
-                return Derivative(expr.args[0], *sorted(expr.args[1:],
-                    key=default_sort_key))
-            return expr
+                expr = Derivative(
+                    expr.args[0], *sorted(expr.args[1:], key=default_sort_key)
+                )
 
-        unevaluated_symbols.sort(key=default_sort_key)
-        return Expr.__new__(cls, expr, *unevaluated_symbols, **assumptions)
+        return expr
 
     def _eval_derivative(self, s):
+        # If the variable s we are diff wrt is not in self.variables, we
+        # assume that we might be able to take the derivative.
         if s not in self.variables:
             obj = self.expr.diff(s)
-            if not obj:
-                return obj
+            if obj is S.Zero:
+                return S.Zero
             if isinstance(obj, Derivative):
                 return Derivative(obj.expr, *(self.variables + obj.variables))
-            return Derivative(obj, *self.variables)
+            # The derivative wrt s could have simplified things such that the
+            # derivative wrt things in self.variables can now be done. Thus,
+            # we set evaluate=True to see if there are any other derivatives
+            # that can be done. The most common case is when obj is a simple
+            # number so that the derivative wrt anything else will vanish.
+            return Derivative(obj, *self.variables, **{'evaluate': True})
+        # In this case s was in self.variables so the derivatve wrt s has
+        # already been attempted and was not computed, either because it
+        # couldn't be or evaluate=False originally.
         return Derivative(self.expr, *(self.variables + (s, )), **{'evaluate': False})
 
     def doit(self, **hints):
@@ -730,7 +828,10 @@ class Derivative(Expr):
     def _eval_subs(self, old, new):
         if self==old:
             return new
-        if old in self.variables and not new.is_Symbol:
+        # Subs should only be used in situations where new is not a valid
+        # variable for differentiating wrt. Previously, Subs was used for
+        # anything that was not a Symbol, but that was too broad.
+        if old in self.variables and not new._diff_wrt:
             # Issue 1620
             return Subs(self, old, new)
         return Derivative(*map(lambda x: x._eval_subs(old, new), self.args))

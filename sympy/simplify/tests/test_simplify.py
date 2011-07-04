@@ -94,6 +94,11 @@ def test_trigsimp3():
 
     assert trigsimp(tan(x)) == trigsimp(sin(x)/cos(x))
 
+def test_trigsimp_issue_2515():
+    x = Symbol('x')
+    assert trigsimp(x*cos(x)*tan(x)) == x*sin(x)
+    assert trigsimp(-sin(x)+cos(x)*tan(x)) == 0
+
 @XFAIL
 def test_factorial_simplify():
     # There are more tests in test_factorials.py. These are just to
@@ -653,3 +658,8 @@ def test_combsimp():
         4*((n + 1)*(n + 2)*binomial(n, k + S(1)/2))/((2*k - 2*n - 1)*(2*k - 2*n - 3))
     assert combsimp(binomial(n + 2, k + 2.0)) == \
         -((1.0*n + 2.0)*binomial(n + 1.0, k + 2.0))/(k - n)
+
+def test_issue_2516():
+    aA, Re, a, b, D = symbols('aA Re a b D')
+    e=((D**3*a + b*aA**3)/Re).expand()
+    assert collect(e, [aA**3/Re, a]) == e
