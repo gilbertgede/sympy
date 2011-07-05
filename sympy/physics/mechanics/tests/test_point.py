@@ -1,9 +1,11 @@
 from sympy import symbols, Matrix, sin, cos
 from sympy.physics.mechanics import (Vector, ReferenceFrame, dot, cross,
-                                     dynamicsymbols, Point, DynamicSymbol)
+                                     dynamicsymbols, Point)
 
 def test_point_v1pts():
-    q, q2, qd, q2d, qdd, q2dd = dynamicsymbols('q q2 qd q2d qdd q2dd')
+    q, q2 = dynamicsymbols('q q2')
+    qd, q2d = dynamicsymbols('q q2', 1)
+    qdd, q2dd = dynamicsymbols('q q2', 2)
     N = ReferenceFrame('N')
     B = ReferenceFrame('B')
     B.set_ang_vel(N, qd * B.z)
@@ -18,7 +20,9 @@ def test_point_v1pts():
     assert P.v1pt(O, N, B) == B.z + N.x + qd * B.y
 
 def test_point_a1pts():
-    q, q2, qd, q2d, qdd, q2dd = dynamicsymbols('q q2 qd q2d qdd q2dd')
+    q, q2 = dynamicsymbols('q q2')
+    qd, q2d = dynamicsymbols('q q2', 1)
+    qdd, q2dd = dynamicsymbols('q q2', 2)
     N = ReferenceFrame('N')
     B = ReferenceFrame('B')
     B.set_ang_vel(N, qd * B.z)
@@ -34,8 +38,8 @@ def test_point_a1pts():
                                q2dd * B.z)
 
 def test_point_v2pts():
-    q = DynamicSymbol('q')
-    qd = DynamicSymbol('qd')
+    q = dynamicsymbols('q')
+    qd = dynamicsymbols('q', 1)
     N = ReferenceFrame('N')
     B = N.orientnew('B', 'Simple', q, 3)
     O = Point('O')
@@ -48,9 +52,9 @@ def test_point_v2pts():
     assert P.v2pt(O, N, B) == N.x + qd * B.y
 
 def test_point_a2pts():
-    q = DynamicSymbol('q')
-    qd = DynamicSymbol('qd')
-    qdd = DynamicSymbol('qdd')
+    q = dynamicsymbols('q')
+    qd = dynamicsymbols('q', 1)
+    qdd = dynamicsymbols('q', 2)
     N = ReferenceFrame('N')
     B = N.orientnew('B', 'Simple', q, 3)
     O = Point('O')
@@ -61,7 +65,9 @@ def test_point_a2pts():
     assert P.a2pt(O, N, B) == (-qd**2) * B.x + (qdd) * B.y
 
 def test_point_funcs():
-    q, q2, qd, q2d, qdd, q2dd = dynamicsymbols('q q2 qd q2d qdd q2dd')
+    q, q2 = dynamicsymbols('q q2')
+    qd, q2d = dynamicsymbols('q q2', 1)
+    qdd, q2dd = dynamicsymbols('q q2', 2)
     N = ReferenceFrame('N')
     B = ReferenceFrame('B')
     B.set_ang_vel(N, 5 * B.y)

@@ -1,13 +1,13 @@
 from sympy import Symbol, diff, sin, cos, exp, sqrt
-from sympy.physics.mechanics import DynamicSymbol
+from sympy.physics.mechanics import dynamicsymbols
 
 def test_dynamicsymbol():
-    x = DynamicSymbol('x')
-    xd = DynamicSymbol('xd')
-    xdd = DynamicSymbol('xdd')
-    y = DynamicSymbol('y')
-    yd = DynamicSymbol('yd')
-    ydd = DynamicSymbol('ydd')
+    x = dynamicsymbols('x')
+    xd = dynamicsymbols('x', 1)
+    xdd = dynamicsymbols('x', 2)
+    y = dynamicsymbols('y')
+    yd = dynamicsymbols('y', 1)
+    ydd = dynamicsymbols('y', 2)
     t = Symbol('t')
     assert diff(x, t) == xd
     assert diff(2 * x + 4, t) == 2 * xd

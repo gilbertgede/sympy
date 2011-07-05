@@ -1,9 +1,16 @@
-__all__ = ['ReferenceFrame', 'Vector', 'Dyad']
+__all__ = ['ReferenceFrame', 'Vector', 'Dyad', 'dynamicsymbols',
+            'MechanicsStrPrinter']
 
 from sympy import (Matrix, Symbol, sin, cos, eye, trigsimp, diff, sqrt, sympify,
-                   expand, S, zeros)
+                   expand, S, zeros, Basic, Derivative, Function, symbols)
 from sympy.core.numbers import Zero
-from sympy.physics.mechanics.dynamicsymbol import DynamicSymbol
+from sympy.printing.pretty.pretty import PrettyPrinter
+from sympy.printing.str import StrPrinter
+
+Basic.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+Basic.__repr__ = lambda self: MechanicsStrPrinter().doprint(self)
+Matrix.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+Derivative.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
 
 class Dyad(object):
     """A Dyad object.
@@ -31,8 +38,8 @@ class Dyad(object):
         while len(inlist) != 0:
             added = 0
             for i, v in enumerate(self.args):
-                if ((inlist[0][1].__str__() == self.args[i][1].__str__()) and
-                    (inlist[0][2].__str__() == self.args[i][2].__str__())):
+                if ((`inlist[0][1]` == `self.args[i][1]`) and
+                    (`inlist[0][2]` == `self.args[i][2]`)):
                     self.args[i] = (self.args[i][0] +
                         inlist[0][0], inlist[0][1], inlist[0][2])
                     inlist.remove(inlist[0])
@@ -51,24 +58,7 @@ class Dyad(object):
             i += 1
 
     def __str__(self):
-        """Printing method. """
-        ar = self.args
-        ol = []
-        for i, v in enumerate(ar):
-            if ar[i][0] == 1:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
-            elif ar[i][0] == -1:
-                if len(ol) != 0:
-                    ol.append(' ')
-                ol.append('- (' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
-            elif ar[i][0] != 0:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + `ar[i][0]` + ')*(' + `ar[i][1]` + '|' +
-                        `ar[i][2]` + ')')
-        return ''.join(ol)
+        return MechanicsStrPrinter().doprint(self)
 
     def __add__(self, other):
         """The add operator for Dyad. """
@@ -297,13 +287,13 @@ class Dyad(object):
         ========
 
         >>> from sympy.physics.mechanics import ReferenceFrame, outer,\
-                DynamicSymbol
+                dynamicsymbols
         >>> N = ReferenceFrame('N')
-        >>> q = DynamicSymbol('q')
+        >>> q = dynamicsymbols('q')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> d = outer(N.x, N.x)
         >>> d.express(B, N)
-        (cos(q))*(B.x|N.x) + (-sin(q))*(B.y|N.x)
+        (cos(q(t)))*(B.x|N.x) + (-sin(q(t)))*(B.y|N.x)
 
         """
 
@@ -328,18 +318,18 @@ class Dyad(object):
         ========
 
         >>> from sympy.physics.mechanics import ReferenceFrame, outer,\
-                DynamicSymbol
+                dynamicsymbols
         >>> N = ReferenceFrame('N')
-        >>> q = DynamicSymbol('q')
+        >>> q = dynamicsymbols('q')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> d = outer(N.x, N.x)
         >>> d.dt(B)
-        (-qd)*(N.y|N.x) + (-qd)*(N.x|N.y)
+        (-q'(t))*(N.y|N.x) + (-q'(t))*(N.x|N.y)
 
         """
 
         self._check_frame(frame)
-        t = DynamicSymbol._t
+        t = dynamicsymbols._t
         ol = 0
         for i, v in enumerate(self.args):
             ol += (v[0].diff(t) * (v[1] | v[2]))
@@ -413,7 +403,7 @@ class ReferenceFrame(object):
     def _w_diff_dcm(self, otherframe):
         """Angular velocity from time differentiating the DCM. """
         dcm2diff = self.dcm(otherframe)
-        diffed = dcm2diff.diff(DynamicSymbol._t)
+        diffed = dcm2diff.diff(dynamicsymbols._t)
         angvelmat = diffed * dcm2diff.T
         w1 = trigsimp(expand(angvelmat[7]), recursive=True)
         w2 = trigsimp(expand(angvelmat[2]), recursive=True)
@@ -727,7 +717,7 @@ class ReferenceFrame(object):
         parent._dcm_dict.update({self: parent_orient.T})
         # TODO double check the sign here
         if rot_type == 'QUATERNION':
-            t = DynamicSymbol._t
+            t = dynamicsymbols._t
             q0 = amounts[0]
             q1 = amounts[1]
             q2 = amounts[2]
@@ -741,7 +731,7 @@ class ReferenceFrame(object):
             w3 = 2 * (q3d * q0 + q1d * q2 - q2d * q1 - q0d * q3)
             wvec = Vector([(Matrix([w1, w2, w3]), self)])
         elif rot_type == 'AXIS':
-            thetad = (amounts[0]).diff(DynamicSymbol._t)
+            thetad = (amounts[0]).diff(dynamicsymbols._t)
             wvec = thetad * amounts[1].express(parent).unit
         else:
             wvec = self._w_diff_dcm(parent)
@@ -881,32 +871,7 @@ class Vector(object):
             i += 1
 
     def __str__(self):
-        """Printing method. """
-        str_ind = 'xyz'
-        ar = self.args # just to shorten things
-        if len(ar) == 0:
-            return `0`
-        ol = [] # output list, to be concatenated to a string
-        for i, v in enumerate(ar):
-            for j in 0, 1, 2:
-                # if the coef of the basis vector is 1, we skip the 1
-                if ar[i][0][j] == 1:
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append(`ar[i][1]` + '.' + str_ind[j])
-                # if the coef of the basis vector is -1, we skip the 1
-                elif ar[i][0][j] == -1:
-                    if len(ol) != 0:
-                        ol.append(' ')
-                    ol.append('- ' + `ar[i][1]` + '.' + str_ind[j])
-                elif ar[i][0][j] != 0:
-                    # If the coefficient of the basis vector is not 1 or -1,
-                    # we wrap it in parentheses, for readability.
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append('(' + `ar[i][0][j]` + ')*' + `ar[i][1]` +
-                              '.' + str_ind[j])
-        return ''.join(ol)
+        return MechanicsStrPrinter().doprint(self)
 
     def __add__(self, other):
         """The add operator for Vector. """
@@ -1226,14 +1191,14 @@ class Vector(object):
         ========
 
         >>> from sympy.physics.mechanics import ReferenceFrame, Vector,\
-                DynamicSymbol
+                dynamicsymbols
         >>> from sympy import Symbol
         >>> t = Symbol('t')
-        >>> q1 = DynamicSymbol('q1')
+        >>> q1 = dynamicsymbols('q1')
         >>> N = ReferenceFrame('N')
         >>> A = N.orientnew('A', 'Simple', q1, 2)
         >>> A.x.diff(t, N)
-        (-q1d)*A.z
+        (-q1'(t))*A.z
 
         """
 
@@ -1267,10 +1232,10 @@ class Vector(object):
         ========
 
         >>> from sympy.physics.mechanics import ReferenceFrame, Vector,\
-                DynamicSymbol
+                dynamicsymbols
         >>> from sympy import Symbol
         >>> q1 = Symbol('q1')
-        >>> u1 = DynamicSymbol('u1')
+        >>> u1 = dynamicsymbols('u1')
         >>> N = ReferenceFrame('N')
         >>> A = N.orientnew('A', 'Simple', q1, 1)
         >>> v = u1 * N.x
@@ -1278,7 +1243,7 @@ class Vector(object):
         >>> A.x.dt(N) == 0
         True
         >>> v.dt(N)
-        (u1d)*N.x
+        (u1'(t))*N.x
 
         """
 
@@ -1286,7 +1251,7 @@ class Vector(object):
         self._check_frame(otherframe)
         for i,v in enumerate(self.args):
             if v[1] == otherframe:
-                outvec += Vector([(v[0].diff(DynamicSymbol._t), otherframe)])
+                outvec += Vector([(v[0].diff(dynamicsymbols._t), otherframe)])
             else:
                 outvec += (Vector([v]).dt(v[1]) +
                     (v[1].ang_vel_in(otherframe) ^ Vector([v])))
@@ -1307,12 +1272,12 @@ class Vector(object):
         ========
 
         >>> from sympy.physics.mechanics import ReferenceFrame, Vector,\
-                DynamicSymbol
-        >>> q1 = DynamicSymbol('q1')
+                dynamicsymbols
+        >>> q1 = dynamicsymbols('q1')
         >>> N = ReferenceFrame('N')
         >>> A = N.orientnew('A', 'Simple', q1, 2)
         >>> A.x.express(N)
-        (cos(q1))*N.x + (-sin(q1))*N.z
+        (cos(q1(t)))*N.x + (-sin(q1(t)))*N.z
 
         """
 
@@ -1339,6 +1304,88 @@ class Vector(object):
     def unit(self):
         """Returns this Vector, with unit length. """
         return Vector(self.args + []) / self.mag
+
+
+class MechanicsStrPrinter(StrPrinter):
+    def _print_Vector(self, e):
+        """Printing method. """
+        str_ind = 'xyz'
+        ar = e.args # just to shorten things
+        if len(ar) == 0:
+            return `0`
+        ol = [] # output list, to be concatenated to a string
+        for i, v in enumerate(ar):
+            for j in 0, 1, 2:
+                # if the coef of the basis vector is 1, we skip the 1
+                if ar[i][0][j] == 1:
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append(`ar[i][1]` + '.' + str_ind[j])
+                # if the coef of the basis vector is -1, we skip the 1
+                elif ar[i][0][j] == -1:
+                    if len(ol) != 0:
+                        ol.append(' ')
+                    ol.append('- ' + `ar[i][1]` + '.' + str_ind[j])
+                elif ar[i][0][j] != 0:
+                    # If the coefficient of the basis vector is not 1 or -1,
+                    # we wrap it in parentheses, for readability.
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append('(' + `ar[i][0][j]` + ')*' + `ar[i][1]` +
+                              '.' + str_ind[j])
+        return ''.join(ol)
+
+    def _print_Dyad(self, e):
+        """Printing method. """
+        ar = e.args
+        ol = []
+        for i, v in enumerate(ar):
+            if ar[i][0] == 1:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
+            elif ar[i][0] == -1:
+                if len(ol) != 0:
+                    ol.append(' ')
+                ol.append('- (' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
+            elif ar[i][0] != 0:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + `ar[i][0]` + ')*(' + `ar[i][1]` + '|' +
+                        `ar[i][2]` + ')')
+        return ''.join(ol)
+
+    def _print_Derivative(self, e):
+        t = dynamicsymbols._t
+        if (t in e.variables) & isinstance(e.args[0], Function):
+            ol = `e.args[0].func`
+            for i, v in enumerate(e.variables):
+                ol += '\''
+            ol += '(' + `t` + ')'
+            return ol
+        else:
+            return StrPrinter.doprint(e)
+
+
+def dynamicsymbols(names, level=0):
+    """Uses symbols and Function for functions of time. """
+    esses = symbols(names, cls=Function)
+    try:
+        esses = [i.__call__(dynamicsymbols._t) for i in list(esses)]
+        ol = esses
+        for i in range(level):
+            ol = []
+            for j, v in enumerate(esses):
+                ol.append(diff(v, dynamicsymbols._t))
+            esses = ol
+        return tuple(ol)
+    except:
+        esses = esses.__call__(dynamicsymbols._t)
+        for i in range(level):
+            esses = diff(esses, dynamicsymbols._t)
+        return esses
+
+dynamicsymbols._t = Symbol('t')
 
 
 if __name__ == "__main__":

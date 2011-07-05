@@ -1,6 +1,7 @@
 __all__ = ['Point']
 
-from sympy.physics.mechanics.essential import Vector, ReferenceFrame
+from sympy.physics.mechanics.essential import (Vector, ReferenceFrame,
+                                               dynamicsymbols)
 
 class Point(object):
     """This object represents a point in a dynamic system.
@@ -86,11 +87,11 @@ class Point(object):
         Examples
         ========
         >>> from sympy.physics.mechanics import Point, ReferenceFrame,\
-                DynamicSymbol
-        >>> q = DynamicSymbol('q')
-        >>> q2 = DynamicSymbol('q2')
-        >>> qd = DynamicSymbol('qd')
-        >>> q2d = DynamicSymbol('q2d')
+                dynamicsymbols
+        >>> q = dynamicsymbols('q')
+        >>> q2 = dynamicsymbols('q2')
+        >>> qd = dynamicsymbols('q', 1)
+        >>> q2d = dynamicsymbols('q2', 1)
         >>> N = ReferenceFrame('N')
         >>> B = ReferenceFrame('B')
         >>> B.set_ang_vel(N, 5 * B.y)
@@ -99,7 +100,7 @@ class Point(object):
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.a1pt(O, N, B)
-        (-25*q + qdd)*B.x + (q2dd)*B.y + (-10*qd)*B.z
+        (-25*q(t) + q''(t))*B.x + (q2''(t))*B.y + (-10*q'(t))*B.z
 
         """
 
@@ -141,16 +142,16 @@ class Point(object):
         ========
 
         >>> from sympy.physics.mechanics import Point, ReferenceFrame,\
-                DynamicSymbol
-        >>> q = DynamicSymbol('q')
-        >>> qd = DynamicSymbol('qd')
+                dynamicsymbols
+        >>> q = dynamicsymbols('q')
+        >>> qd = dynamicsymbols('q', 1)
         >>> N = ReferenceFrame('N')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> O = Point('O')
         >>> P = O.newpoint('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.a2pt(O, N, B)
-        (-10*qd**2)*B.x + (10*qdd)*B.y
+        (-10*q'(t)**2)*B.x + (10*q''(t))*B.y
 
         """
 
@@ -352,11 +353,11 @@ class Point(object):
         ========
 
         >>> from sympy.physics.mechanics import Point, ReferenceFrame,\
-                DynamicSymbol
-        >>> q = DynamicSymbol('q')
-        >>> q2 = DynamicSymbol('q2')
-        >>> qd = DynamicSymbol('qd')
-        >>> q2d = DynamicSymbol('q2d')
+                dynamicsymbols
+        >>> q = dynamicsymbols('q')
+        >>> q2 = dynamicsymbols('q2')
+        >>> qd = dynamicsymbols('q', 1)
+        >>> q2d = dynamicsymbols('q2', 1)
         >>> N = ReferenceFrame('N')
         >>> B = ReferenceFrame('B')
         >>> B.set_ang_vel(N, 5 * B.y)
@@ -365,7 +366,7 @@ class Point(object):
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.v1pt(O, N, B)
-        (qd)*B.x + (q2d)*B.y + (-5*q)*B.z
+        (q'(t))*B.x + (q2'(t))*B.y + (-5*q(t))*B.z
 
         """
 
@@ -403,16 +404,16 @@ class Point(object):
         ========
 
         >>> from sympy.physics.mechanics import Point, ReferenceFrame,\
-                DynamicSymbol
-        >>> q = DynamicSymbol('q')
-        >>> qd = DynamicSymbol('qd')
+                dynamicsymbols
+        >>> q = dynamicsymbols('q')
+        >>> qd = dynamicsymbols('q', 1)
         >>> N = ReferenceFrame('N')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> O = Point('O')
         >>> P = O.newpoint('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.v2pt(O, N, B)
-        (5)*N.x + (10*qd)*B.y
+        (5)*N.x + (10*q'(t))*B.y
 
         """
 

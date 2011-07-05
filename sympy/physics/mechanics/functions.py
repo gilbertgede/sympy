@@ -1,13 +1,11 @@
 __all__ = ['cross',
            'dot',
-           'dynamicsymbols',
            'express',
            'outer',
            'inertia']
 
 from sympy.physics.mechanics.essential import Vector, Dyad, ReferenceFrame
-from sympy.physics.mechanics.dynamicsymbol import DynamicSymbol
-from sympy import sympify, symbols, Function, diff
+from sympy import sympify
 
 def cross(vec1, vec2):
     """Cross product convenience wrapper for Vector.cross(): \n"""
@@ -22,17 +20,6 @@ def dot(vec1, vec2):
         raise TypeError('Dot product is between two vectors')
     return vec1 & vec2
 dot.__doc__ += Vector.dot.__doc__
-
-def dynamicsymbols(names, level=0):
-    """Wraps sympy.symbols for time functions. """
-    esses = symbols(names, cls=DynamicSymbol)
-    ol = esses
-    for i in range(level):
-        ol = []
-        for j, v in enumerate(esses):
-            ol.append(diff(v, DynamicSymbol._t))
-        esses = ol
-    return tuple(ol)
 
 def express(vec, frame, frame2=None):
     """Express convenience wrapper for Vector.express(): \n"""

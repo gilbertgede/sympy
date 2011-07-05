@@ -1,9 +1,8 @@
 __all__ = ['Kane']
 
 from sympy import Symbol, zeros, simplify, Matrix, diff
-from sympy.physics.mechanics.essential import ReferenceFrame
+from sympy.physics.mechanics.essential import ReferenceFrame, dynamicsymbols
 from sympy.physics.mechanics.point import Point
-from sympy.physics.mechanics.dynamicsymbol import DynamicSymbol
 from sympy.physics.mechanics.rigidbody import RigidBody
 from sympy.physics.mechanics.particle import Particle
 
@@ -38,7 +37,8 @@ class Kane(object):
     >>> from sympy import symbols
     >>> from sympy.physics.mechanics import dynamicsymbols, ReferenceFrame
     >>> from sympy.physics.mechanics import Point, Particle, Kane
-    >>> q, qd, u, ud = dynamicsymbols('q qd u ud')
+    >>> q, u = dynamicsymbols('q u')
+    >>> qd, ud = dynamicsymbols('q u', 1)
     >>> m, c, k = symbols('m c k')
     >>> N = ReferenceFrame('N')
     >>> P = Point('P')
@@ -81,7 +81,7 @@ class Kane(object):
     >>> forcing = KM.forcing
     >>> rhs = MM.inv() * forcing
     >>> rhs
-    [-(q*k + u*c)/m]
+    [-(c*u(t) + k*q(t))/m]
 
     """
 
@@ -118,7 +118,8 @@ class Kane(object):
         self._f_dnh = Matrix([])
 
     def _find_others(self, inlist, insyms):
-        """Finds all non-supplied DynamicSymbols in the list of expressions."""
+        pass
+        """Finds all non-supplied dynamicsymbols in the list of expressions.
         def _deeper(inexpr):
             oli = []
             try:
@@ -144,13 +145,14 @@ class Kane(object):
             if ol.__contains__(v):
                 ol.remove(v)
         return ol
+        """
 
     def coords(self, inlist):
         """Supply all the generalized coordinates in a list. """
         if not isinstance(inlist, (list, tuple)):
             raise TypeError('Generalized coords. must be supplied in a list')
         self._q = inlist
-        self._qdot = [diff(i, DynamicSymbol._t) for i in inlist]
+        self._qdot = [diff(i, dynamicsymbols._t) for i in inlist]
 
     def speeds(self, inlist):
         """Supply all the generalized speeds in a list.
@@ -168,7 +170,7 @@ class Kane(object):
         if not isinstance(inlist, (list, tuple)):
             raise TypeError('Generalized speeds must be supplied in a list')
         self._u = inlist
-        self._udot = [diff(i, DynamicSymbol._t) for i in inlist]
+        self._udot = [diff(i, dynamicsymbols._t) for i in inlist]
 
     def kindiffeq(self, kdeqs):
         """Supply all the kinematic differential equations in a list.
@@ -230,8 +232,8 @@ class Kane(object):
         self._k_nh = (coneq - self._f_nh).jacobian(u)
         if diffconeq == None:
             self._k_dnh = self._k_nh
-            self._f_dnh = (self._k_nh.diff(DynamicSymbol._t) * Matrix(u) +
-                           self._f_nh.diff(DynamicSymbol._t))
+            self._f_dnh = (self._k_nh.diff(dynamicsymbols._t) * Matrix(u) +
+                           self._f_nh.diff(dynamicsymbols._t))
         else:
             self._f_dnh = diffconeq.subs(udotzero)
             self._k_dnh = (diffconeq - self._f_dnh).jacobian(udot)
@@ -360,7 +362,7 @@ class Kane(object):
                 templist = []
                 for j, w in enumerate(udot):
                     templist.append(-m * acc.diff(w, N))
-                other = -m.diff(DynamicSymbol._t) * ve - m * acc
+                other = -m.diff(dynamicsymbols._t) * ve - m * acc
                 rs = (templist, other)
                 templist = []
                 for j, w in enumerate(udot):
@@ -381,7 +383,7 @@ class Kane(object):
                 templist = []
                 for j, w in enumerate(udot):
                     templist.append(-m * acc.diff(w, N))
-                other = -m.diff(DynamicSymbol._t) * ve - m * acc
+                other = -m.diff(dynamicsymbols._t) * ve - m * acc
                 rs = (templist, other)
                 ts = ([0] * len(u), 0)
                 tl1 = []
