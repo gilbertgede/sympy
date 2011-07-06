@@ -2,9 +2,11 @@ __all__ = ['cross',
            'dot',
            'express',
            'outer',
-           'inertia']
+           'inertia',
+           'mechanics_printing']
 
-from sympy.physics.mechanics.essential import Vector, Dyad, ReferenceFrame
+from sympy.physics.mechanics.essential import (Vector, Dyad, ReferenceFrame,
+                                               MechanicsStrPrinter)
 from sympy import sympify
 
 def cross(vec1, vec2):
@@ -84,6 +86,40 @@ def inertia(frame, ixx, iyy, izz, ixy=0, iyz=0, izx=0):
     ol += sympify(iyz) * (frame.z | frame.y)
     ol += sympify(izz) * (frame.z | frame.z)
     return ol
+
+def mechanics_printing():
+    """Sets up interactive printing for mechanics' derivatives.
+
+    The main benefit of this is for printing of time derivatives;
+    instead of displaying as Derivative(f(t),t), it will display f'
+    This is only actually needed for when derivatives are present and are not
+    in a physics.mechanics object.
+
+    Examples
+    ========
+
+    >>> from sympy import Function, Symbol, diff
+    >>> from sympy.physics.mechanics import mechanics_printing
+    >>> f = Function('f')
+    >>> t = Symbol('t')
+    >>> x = Symbol('x')
+    >>> diff(f(t), t)
+    Derivative(f(t), t)
+    >>> mechanics_printing()
+    displayhook set
+    >>> diff(f(t), t)
+    f'
+    >>> diff(f(x), x)
+    Derivative(f(x), x)
+
+    """
+
+    import sys
+    def mydhook(ar):
+        print MechanicsStrPrinter().doprint(ar)
+    sys.displayhook = mydhook
+    return 'displayhook set'
+
 
 if __name__ == "__main__":
     import doctest

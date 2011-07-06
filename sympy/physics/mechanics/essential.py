@@ -6,7 +6,6 @@ from sympy import (Matrix, Symbol, sin, cos, eye, trigsimp, diff, sqrt, sympify,
 from sympy.core.numbers import Zero
 from sympy.printing.pretty.pretty import PrettyPrinter
 from sympy.printing.str import StrPrinter
-import sys
 
 class Dyad(object):
     """A Dyad object.
@@ -208,6 +207,28 @@ class Dyad(object):
             ol += v[0] * ((other ^ v[1]) | v[2])
         return ol
 
+    def __str__(self, printer=None):
+        """Printing method. """
+        ar = self.args
+        if len(ar) == 0:
+            return str(0)
+        ol = []
+        for i, v in enumerate(ar):
+            if ar[i][0] == 1:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+            elif ar[i][0] == -1:
+                if len(ol) != 0:
+                    ol.append(' ')
+                ol.append('- (' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+            elif ar[i][0] != 0:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0]) +
+                          ')*(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+        return ''.join(ol)
+
     def __sub__(self, other):
         """The subtraction operator. """
         return self.__add__(other * -1)
@@ -255,36 +276,11 @@ class Dyad(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def __str__(self, printer=None):
-        """Printing method. """
-        ar = self.args
-        if len(ar) == 0:
-            return str(0)
-        ol = []
-        for i, v in enumerate(ar):
-            if ar[i][0] == 1:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
-            elif ar[i][0] == -1:
-                if len(ol) != 0:
-                    ol.append(' ')
-                ol.append('- (' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
-            elif ar[i][0] != 0:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0]) +
-                          ')*(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
-        return ''.join(ol)
-
     _sympystr = __str__
     _sympyrepr = _sympystr
     __repr__ = __str__
     __radd__ = __add__
     __rmul__ = __mul__
-    dot = __and__
-    cross = __xor__
-
 
     def express(self, frame1, frame2=None):
         """Expresses this Dyad in alternate frame(s)
@@ -355,6 +351,9 @@ class Dyad(object):
             ol += (v[0] * (v[1] | v[2].dt(frame)))
         return ol
 
+    dot = __and__
+    cross = __xor__
+
 
 class ReferenceFrame(object):
     """A reference frame in classical mechanics.
@@ -418,16 +417,6 @@ class ReferenceFrame(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def _w_diff_dcm(self, otherframe):
-        """Angular velocity from time differentiating the DCM. """
-        dcm2diff = self.dcm(otherframe)
-        diffed = dcm2diff.diff(dynamicsymbols._t)
-        angvelmat = diffed * dcm2diff.T
-        w1 = trigsimp(expand(angvelmat[7]), recursive=True)
-        w2 = trigsimp(expand(angvelmat[2]), recursive=True)
-        w3 = trigsimp(expand(angvelmat[3]), recursive=True)
-        return -Vector([(Matrix([w1, w2, w3]), self)])
-
     def _dict_list(self, other, num):
         """Creates a list from self to other using _dcm_dict. """
         outlist = [[self]]
@@ -449,6 +438,16 @@ class ReferenceFrame(object):
             return outlist[0]
         raise ValueError('No Connecting Path found between ' + self.name +
                          ' and ' + other.name)
+
+    def _w_diff_dcm(self, otherframe):
+        """Angular velocity from time differentiating the DCM. """
+        dcm2diff = self.dcm(otherframe)
+        diffed = dcm2diff.diff(dynamicsymbols._t)
+        angvelmat = diffed * dcm2diff.T
+        w1 = trigsimp(expand(angvelmat[7]), recursive=True)
+        w2 = trigsimp(expand(angvelmat[2]), recursive=True)
+        w3 = trigsimp(expand(angvelmat[3]), recursive=True)
+        return -Vector([(Matrix([w1, w2, w3]), self)])
 
     def ang_acc_in(self, otherframe):
         """Returns the angular acceleration Vector of the ReferenceFrame.
@@ -548,38 +547,6 @@ class ReferenceFrame(object):
         for i in range(len(flist) - 1):
             outdcm = outdcm * flist[i + 1]._dcm_dict[flist[i]]
         return outdcm
-
-    def orientnew(self, newname, rot_type, amounts, rot_order=''):
-        """Creates a new ReferenceFrame oriented with respect to this Frame.
-
-        See ReferenceFrame.orient() for acceptable rotation types, amounts,
-        and orders. Parent is going to be self.
-
-        Parameters
-        ==========
-        newname : str
-            The name for the new ReferenceFrame
-        rot_type : str
-            The type of orientation matrix that is being created.
-        amounts : list OR value
-            The quantities that the orientation matrix will be defined by.
-        rot_order : str
-            If applicable, the order of a series of rotations.
-
-        Examples
-        ========
-
-        >>> from sympy.physics.mechanics import ReferenceFrame, Vector
-        >>> from sympy import symbols
-        >>> q1 = symbols('q1')
-        >>> N = ReferenceFrame('N')
-        >>> A = N.orientnew('A', 'Simple', q1, 1)
-
-        """
-
-        newframe = ReferenceFrame(newname)
-        newframe.orient(self, rot_type, amounts, rot_order)
-        return newframe
 
     def orient(self, parent, rot_type, amounts, rot_order=''):
         """Defines the orientation of this frame relative to a parent frame.
@@ -755,6 +722,38 @@ class ReferenceFrame(object):
             wvec = self._w_diff_dcm(parent)
         self._ang_vel_dict.update({parent: wvec})
         parent._ang_vel_dict.update({self: -wvec})
+
+    def orientnew(self, newname, rot_type, amounts, rot_order=''):
+        """Creates a new ReferenceFrame oriented with respect to this Frame.
+
+        See ReferenceFrame.orient() for acceptable rotation types, amounts,
+        and orders. Parent is going to be self.
+
+        Parameters
+        ==========
+        newname : str
+            The name for the new ReferenceFrame
+        rot_type : str
+            The type of orientation matrix that is being created.
+        amounts : list OR value
+            The quantities that the orientation matrix will be defined by.
+        rot_order : str
+            If applicable, the order of a series of rotations.
+
+        Examples
+        ========
+
+        >>> from sympy.physics.mechanics import ReferenceFrame, Vector
+        >>> from sympy import symbols
+        >>> q1 = symbols('q1')
+        >>> N = ReferenceFrame('N')
+        >>> A = N.orientnew('A', 'Simple', q1, 1)
+
+        """
+
+        newframe = ReferenceFrame(newname)
+        newframe.orient(self, rot_type, amounts, rot_order)
+        return newframe
 
     def set_ang_acc(self, otherframe, value):
         """Define the angular acceleration Vector in a ReferenceFrame.
@@ -1079,6 +1078,34 @@ class Vector(object):
     def __rsub__(self, other):
         return (-1 * self) + other
 
+    def __str__(self, printer=None):
+        """Printing method. """
+        str_ind = 'xyz'
+        ar = self.args # just to shorten things
+        if len(ar) == 0:
+            return str(0)
+        ol = [] # output list, to be concatenated to a string
+        for i, v in enumerate(ar):
+            for j in 0, 1, 2:
+                # if the coef of the basis vector is 1, we skip the 1
+                if ar[i][0][j] == 1:
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append(str(ar[i][1]) + '.' + str_ind[j])
+                # if the coef of the basis vector is -1, we skip the 1
+                elif ar[i][0][j] == -1:
+                    if len(ol) != 0:
+                        ol.append(' ')
+                    ol.append('- ' + str(ar[i][1]) + '.' + str_ind[j])
+                elif ar[i][0][j] != 0:
+                    # If the coefficient of the basis vector is not 1 or -1,
+                    # we wrap it in parentheses, for readability.
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0][j])
+                              + ')*' + str(ar[i][1]) + '.' + str_ind[j])
+        return ''.join(ol)
+
     def __sub__(self, other):
         """The subraction operator. """
         return self.__add__(other * -1)
@@ -1153,35 +1180,6 @@ class Vector(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def __str__(self, printer=None):
-        """Printing method. """
-        str_ind = 'xyz'
-        ar = self.args # just to shorten things
-        if len(ar) == 0:
-            return str(0)
-        ol = [] # output list, to be concatenated to a string
-        for i, v in enumerate(ar):
-            for j in 0, 1, 2:
-                # if the coef of the basis vector is 1, we skip the 1
-                if ar[i][0][j] == 1:
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append(str(ar[i][1]) + '.' + str_ind[j])
-                # if the coef of the basis vector is -1, we skip the 1
-                elif ar[i][0][j] == -1:
-                    if len(ol) != 0:
-                        ol.append(' ')
-                    ol.append('- ' + str(ar[i][1]) + '.' + str_ind[j])
-                elif ar[i][0][j] != 0:
-                    # If the coefficient of the basis vector is not 1 or -1,
-                    # we wrap it in parentheses, for readability.
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0][j])
-                              + ')*' + str(ar[i][1]) + '.' + str_ind[j])
-        return ''.join(ol)
-
-
     _sympystr = __str__
     _sympyrepr = _sympystr
     __repr__ = __str__
@@ -1199,27 +1197,6 @@ class Vector(object):
     def outer(self, other):
         return self | other
     outer.__doc__ = __or__.__doc__
-
-    def subs(self, dictin):
-        """Substituion on the Vector, with a dict.
-
-        Examples
-        ========
-
-        >>> from sympy.physics.mechanics import ReferenceFrame
-        >>> from sympy import Symbol
-        >>> N = ReferenceFrame('N')
-        >>> s = Symbol('s')
-        >>> a = N.x * s
-        >>> a.subs({s: 2})
-        (2)*N.x
-
-        """
-
-        ov = 0
-        for i, v in enumerate(self.args):
-            ov += Vector([(v[0].subs(dictin), v[1])])
-        return ov
 
     def diff(self, wrt, otherframe):
         """Takes the partial derivative, with respect to a value, in a frame.
@@ -1340,6 +1317,27 @@ class Vector(object):
                 outvec += Vector([(temp, otherframe)])
                 outvec -= Vector([v])
         return outvec
+
+    def subs(self, dictin):
+        """Substituion on the Vector, with a dict.
+
+        Examples
+        ========
+
+        >>> from sympy.physics.mechanics import ReferenceFrame
+        >>> from sympy import Symbol
+        >>> N = ReferenceFrame('N')
+        >>> s = Symbol('s')
+        >>> a = N.x * s
+        >>> a.subs({s: 2})
+        (2)*N.x
+
+        """
+
+        ov = 0
+        for i, v in enumerate(self.args):
+            ov += Vector([(v[0].subs(dictin), v[1])])
+        return ov
 
     @property
     def mag(self):
