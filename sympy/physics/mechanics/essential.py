@@ -8,12 +8,6 @@ from sympy.printing.pretty.pretty import PrettyPrinter
 from sympy.printing.str import StrPrinter
 import sys
 
-#Basic.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
-#Basic.__repr__ = lambda self: MechanicsStrPrinter().doprint(self)
-#Matrix.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
-#Derivative.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
-#sys.displayhook = lambda self: MechanicsStrPrinter().doprint(self)
-
 class Dyad(object):
     """A Dyad object.
 
@@ -58,9 +52,6 @@ class Dyad(object):
                 self.args.remove(self.args[i])
                 i -= 1
             i += 1
-
-#    def __str__(self):
-#        return MechanicsStrPrinter().doprint(self)
 
     def __add__(self, other):
         """The add operator for Dyad. """
@@ -264,11 +255,30 @@ class Dyad(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def _sympystr(self, printer=None):
-        return MechanicsStrPrinter().doprint(self)
+    def __str__(self, printer=None):
+        """Printing method. """
+        ar = self.args
+        if len(ar) == 0:
+            return str(0)
+        ol = []
+        for i, v in enumerate(ar):
+            if ar[i][0] == 1:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+            elif ar[i][0] == -1:
+                if len(ol) != 0:
+                    ol.append(' ')
+                ol.append('- (' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+            elif ar[i][0] != 0:
+                if len(ol) != 0:
+                    ol.append(' + ')
+                ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0]) +
+                          ')*(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
+        return ''.join(ol)
 
+    _sympystr = __str__
     _sympyrepr = _sympystr
-    __str__  = _sympystr
     __repr__ = __str__
     __radd__ = __add__
     __rmul__ = __mul__
@@ -301,7 +311,7 @@ class Dyad(object):
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> d = outer(N.x, N.x)
         >>> d.express(B, N)
-        (cos(q(t)))*(B.x|N.x) + (-sin(q(t)))*(B.y|N.x)
+        (cos(q))*(B.x|N.x) + (-sin(q))*(B.y|N.x)
 
         """
 
@@ -332,7 +342,7 @@ class Dyad(object):
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> d = outer(N.x, N.x)
         >>> d.dt(B)
-        (-q'(t))*(N.y|N.x) + (-q'(t))*(N.x|N.y)
+        (-q')*(N.y|N.x) + (-q')*(N.x|N.y)
 
         """
 
@@ -878,9 +888,6 @@ class Vector(object):
                 i -= 1
             i += 1
 
-#    def __str__(self):
-#        return MechanicsStrPrinter().doprint(self)
-
     def __add__(self, other):
         """The add operator for Vector. """
         if isinstance(other, int):
@@ -1146,12 +1153,37 @@ class Vector(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def _sympystr(self, printer=None):
-        return MechanicsStrPrinter().doprint(self)
+    def __str__(self, printer=None):
+        """Printing method. """
+        str_ind = 'xyz'
+        ar = self.args # just to shorten things
+        if len(ar) == 0:
+            return str(0)
+        ol = [] # output list, to be concatenated to a string
+        for i, v in enumerate(ar):
+            for j in 0, 1, 2:
+                # if the coef of the basis vector is 1, we skip the 1
+                if ar[i][0][j] == 1:
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append(str(ar[i][1]) + '.' + str_ind[j])
+                # if the coef of the basis vector is -1, we skip the 1
+                elif ar[i][0][j] == -1:
+                    if len(ol) != 0:
+                        ol.append(' ')
+                    ol.append('- ' + str(ar[i][1]) + '.' + str_ind[j])
+                elif ar[i][0][j] != 0:
+                    # If the coefficient of the basis vector is not 1 or -1,
+                    # we wrap it in parentheses, for readability.
+                    if len(ol) != 0:
+                        ol.append(' + ')
+                    ol.append('(' + MechanicsStrPrinter().doprint(ar[i][0][j])
+                              + ')*' + str(ar[i][1]) + '.' + str_ind[j])
+        return ''.join(ol)
 
+
+    _sympystr = __str__
     _sympyrepr = _sympystr
-
-    __str__  = _sympystr
     __repr__ = __str__
     __radd__ = __add__
     __rmul__ = __mul__
@@ -1212,7 +1244,7 @@ class Vector(object):
         >>> N = ReferenceFrame('N')
         >>> A = N.orientnew('A', 'Simple', q1, 2)
         >>> A.x.diff(t, N)
-        (-q1'(t))*A.z
+        (-q1')*A.z
 
         """
 
@@ -1257,7 +1289,7 @@ class Vector(object):
         >>> A.x.dt(N) == 0
         True
         >>> v.dt(N)
-        (u1'(t))*N.x
+        (u1')*N.x
 
         """
 
@@ -1291,7 +1323,7 @@ class Vector(object):
         >>> N = ReferenceFrame('N')
         >>> A = N.orientnew('A', 'Simple', q1, 2)
         >>> A.x.express(N)
-        (cos(q1(t)))*N.x + (-sin(q1(t)))*N.z
+        (cos(q1))*N.x + (-sin(q1))*N.z
 
         """
 
@@ -1321,66 +1353,21 @@ class Vector(object):
 
 
 class MechanicsStrPrinter(StrPrinter):
-    def _print_Vector(self, e):
-        """Printing method. """
-        str_ind = 'xyz'
-        ar = e.args # just to shorten things
-        if len(ar) == 0:
-            return str(0)
-        ol = [] # output list, to be concatenated to a string
-        for i, v in enumerate(ar):
-            for j in 0, 1, 2:
-                # if the coef of the basis vector is 1, we skip the 1
-                if ar[i][0][j] == 1:
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append(str(ar[i][1]) + '.' + str_ind[j])
-                # if the coef of the basis vector is -1, we skip the 1
-                elif ar[i][0][j] == -1:
-                    if len(ol) != 0:
-                        ol.append(' ')
-                    ol.append('- ' + str(ar[i][1]) + '.' + str_ind[j])
-                elif ar[i][0][j] != 0:
-                    # If the coefficient of the basis vector is not 1 or -1,
-                    # we wrap it in parentheses, for readability.
-                    if len(ol) != 0:
-                        ol.append(' + ')
-                    ol.append('(' + str(ar[i][0][j]) + ')*' + str(ar[i][1]) +
-                              '.' + str_ind[j])
-        return ''.join(ol)
-
-    def _print_Dyad(self, e):
-        """Printing method. """
-        ar = e.args
-        if len(ar) == 0:
-            return str(0)
-        ol = []
-        for i, v in enumerate(ar):
-            if ar[i][0] == 1:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
-            elif ar[i][0] == -1:
-                if len(ol) != 0:
-                    ol.append(' ')
-                ol.append('- (' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
-            elif ar[i][0] != 0:
-                if len(ol) != 0:
-                    ol.append(' + ')
-                ol.append('(' + str(ar[i][0]) + ')*(' + str(ar[i][1]) + '|' +
-                        str(ar[i][2]) + ')')
-        return ''.join(ol)
-
     def _print_Derivative(self, e):
         t = dynamicsymbols._t
         if (t in e.variables) & isinstance(e.args[0], Function):
             ol = str(e.args[0].func)
             for i, v in enumerate(e.variables):
                 ol += '\''
-            ol += '(' + str(t) + ')'
             return ol
         else:
-            return StrPrinter.doprint(e)
+            return StrPrinter().doprint(e)
+
+    def _print_Function(self, e):
+        from sympy.core.function import UndefinedFunction
+        t = dynamicsymbols._t
+        temp = StrPrinter().doprint(e)
+        return temp.replace('(t)', '')
 
 
 def dynamicsymbols(names, level=0):

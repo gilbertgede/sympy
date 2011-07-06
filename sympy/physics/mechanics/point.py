@@ -100,7 +100,7 @@ class Point(object):
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.a1pt(O, N, B)
-        (-25*q(t) + q''(t))*B.x + (q2''(t))*B.y + (-10*q'(t))*B.z
+        (-25*q + q'')*B.x + (q2'')*B.y + (-10*q')*B.z
 
         """
 
@@ -151,7 +151,7 @@ class Point(object):
         >>> P = O.newpoint('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.a2pt(O, N, B)
-        (-10*q'(t)**2)*B.x + (10*q''(t))*B.y
+        (-10*q'**2)*B.x + (10*q'')*B.y
 
         """
 
@@ -366,7 +366,7 @@ class Point(object):
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.v1pt(O, N, B)
-        (q'(t))*B.x + (q2'(t))*B.y + (-5*q(t))*B.z
+        (q')*B.x + (q2')*B.y + (-5*q)*B.z
 
         """
 
@@ -413,7 +413,7 @@ class Point(object):
         >>> P = O.newpoint('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.v2pt(O, N, B)
-        (5)*N.x + (10*q'(t))*B.y
+        (5)*N.x + (10*q')*B.y
 
         """
 
