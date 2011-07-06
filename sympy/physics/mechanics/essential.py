@@ -40,8 +40,8 @@ class Dyad(object):
         while len(inlist) != 0:
             added = 0
             for i, v in enumerate(self.args):
-                if ((`inlist[0][1]` == `self.args[i][1]`) and
-                    (`inlist[0][2]` == `self.args[i][2]`)):
+                if ((str(inlist[0][1]) == str(self.args[i][1])) and
+                    (str(inlist[0][2]) == str(self.args[i][2]))):
                     self.args[i] = (self.args[i][0] +
                         inlist[0][0], inlist[0][1], inlist[0][2])
                     inlist.remove(inlist[0])
@@ -59,8 +59,8 @@ class Dyad(object):
                 i -= 1
             i += 1
 
-    def __str__(self):
-        return MechanicsStrPrinter().doprint(self)
+#    def __str__(self):
+#        return MechanicsStrPrinter().doprint(self)
 
     def __add__(self, other):
         """The add operator for Dyad. """
@@ -246,12 +246,6 @@ class Dyad(object):
             ol += v[0] * (v[1] | (v[2] ^ other))
         return ol
 
-    __repr__ = __str__
-    __radd__ = __add__
-    __rmul__ = __mul__
-    dot = __and__
-    cross = __xor__
-
     def _check_frame(self, other):
         if not isinstance(other, ReferenceFrame):
             raise TypeError('A ReferenceFrame must be supplied')
@@ -270,10 +264,17 @@ class Dyad(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def _sympystr(self, printer):
+    def _sympystr(self, printer=None):
         return MechanicsStrPrinter().doprint(self)
 
     _sympyrepr = _sympystr
+    __str__  = _sympystr
+    __repr__ = __str__
+    __radd__ = __add__
+    __rmul__ = __mul__
+    dot = __and__
+    cross = __xor__
+
 
     def express(self, frame1, frame2=None):
         """Expresses this Dyad in alternate frame(s)
@@ -877,8 +878,8 @@ class Vector(object):
                 i -= 1
             i += 1
 
-    def __str__(self):
-        return MechanicsStrPrinter().doprint(self)
+#    def __str__(self):
+#        return MechanicsStrPrinter().doprint(self)
 
     def __add__(self, other):
         """The add operator for Vector. """
@@ -1145,11 +1146,12 @@ class Vector(object):
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
 
-    def _sympystr(self, printer):
+    def _sympystr(self, printer=None):
         return MechanicsStrPrinter().doprint(self)
 
     _sympyrepr = _sympystr
 
+    __str__  = _sympystr
     __repr__ = __str__
     __radd__ = __add__
     __rmul__ = __mul__
@@ -1324,7 +1326,7 @@ class MechanicsStrPrinter(StrPrinter):
         str_ind = 'xyz'
         ar = e.args # just to shorten things
         if len(ar) == 0:
-            return `0`
+            return str(0)
         ol = [] # output list, to be concatenated to a string
         for i, v in enumerate(ar):
             for j in 0, 1, 2:
@@ -1332,48 +1334,50 @@ class MechanicsStrPrinter(StrPrinter):
                 if ar[i][0][j] == 1:
                     if len(ol) != 0:
                         ol.append(' + ')
-                    ol.append(`ar[i][1]` + '.' + str_ind[j])
+                    ol.append(str(ar[i][1]) + '.' + str_ind[j])
                 # if the coef of the basis vector is -1, we skip the 1
                 elif ar[i][0][j] == -1:
                     if len(ol) != 0:
                         ol.append(' ')
-                    ol.append('- ' + `ar[i][1]` + '.' + str_ind[j])
+                    ol.append('- ' + str(ar[i][1]) + '.' + str_ind[j])
                 elif ar[i][0][j] != 0:
                     # If the coefficient of the basis vector is not 1 or -1,
                     # we wrap it in parentheses, for readability.
                     if len(ol) != 0:
                         ol.append(' + ')
-                    ol.append('(' + `ar[i][0][j]` + ')*' + `ar[i][1]` +
+                    ol.append('(' + str(ar[i][0][j]) + ')*' + str(ar[i][1]) +
                               '.' + str_ind[j])
         return ''.join(ol)
 
     def _print_Dyad(self, e):
         """Printing method. """
         ar = e.args
+        if len(ar) == 0:
+            return str(0)
         ol = []
         for i, v in enumerate(ar):
             if ar[i][0] == 1:
                 if len(ol) != 0:
                     ol.append(' + ')
-                ol.append('(' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
+                ol.append('(' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
             elif ar[i][0] == -1:
                 if len(ol) != 0:
                     ol.append(' ')
-                ol.append('- (' + `ar[i][1]` + '|' + `ar[i][2]` + ')')
+                ol.append('- (' + str(ar[i][1]) + '|' + str(ar[i][2]) + ')')
             elif ar[i][0] != 0:
                 if len(ol) != 0:
                     ol.append(' + ')
-                ol.append('(' + `ar[i][0]` + ')*(' + `ar[i][1]` + '|' +
-                        `ar[i][2]` + ')')
+                ol.append('(' + str(ar[i][0]) + ')*(' + str(ar[i][1]) + '|' +
+                        str(ar[i][2]) + ')')
         return ''.join(ol)
 
     def _print_Derivative(self, e):
         t = dynamicsymbols._t
         if (t in e.variables) & isinstance(e.args[0], Function):
-            ol = `e.args[0].func`
+            ol = str(e.args[0].func)
             for i, v in enumerate(e.variables):
                 ol += '\''
-            ol += '(' + `t` + ')'
+            ol += '(' + str(t) + ')'
             return ol
         else:
             return StrPrinter.doprint(e)
