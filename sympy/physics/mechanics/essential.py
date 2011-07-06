@@ -1,16 +1,18 @@
 __all__ = ['ReferenceFrame', 'Vector', 'Dyad', 'dynamicsymbols',
-            'MechanicsStrPrinter']
+           'MechanicsStrPrinter']
 
 from sympy import (Matrix, Symbol, sin, cos, eye, trigsimp, diff, sqrt, sympify,
                    expand, S, zeros, Basic, Derivative, Function, symbols)
 from sympy.core.numbers import Zero
 from sympy.printing.pretty.pretty import PrettyPrinter
 from sympy.printing.str import StrPrinter
+import sys
 
-Basic.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
-Basic.__repr__ = lambda self: MechanicsStrPrinter().doprint(self)
-Matrix.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
-Derivative.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+#Basic.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+#Basic.__repr__ = lambda self: MechanicsStrPrinter().doprint(self)
+#Matrix.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+#Derivative.__str__ = lambda self: MechanicsStrPrinter().doprint(self)
+#sys.displayhook = lambda self: MechanicsStrPrinter().doprint(self)
 
 class Dyad(object):
     """A Dyad object.
@@ -267,6 +269,11 @@ class Dyad(object):
                 return
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
+
+    def _sympystr(self, printer):
+        return MechanicsStrPrinter().doprint(self)
+
+    _sympyrepr = _sympystr
 
     def express(self, frame1, frame2=None):
         """Expresses this Dyad in alternate frame(s)
@@ -1137,6 +1144,11 @@ class Vector(object):
                 return
         if not isinstance(other, Vector):
             raise TypeError('A Vector must be supplied')
+
+    def _sympystr(self, printer):
+        return MechanicsStrPrinter().doprint(self)
+
+    _sympyrepr = _sympystr
 
     __repr__ = __str__
     __radd__ = __add__
