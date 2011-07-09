@@ -1,0 +1,136 @@
+=====================
+Mechanics: Kinematics
+=====================
+
+In mechanics, kinematics refers to the motion of bodies (or particles).
+It is the 'a' in 'f=ma'. This document will give some mathematical background
+to describing a system's kinematics as well as how to represent the kinematics
+in :mod:`mechanics`.
+
+Introduction to Kinematics
+==========================
+
+The first topic is rigid motion kinematics. A rigid body is an idealized
+representation of a physical object which has mass and rotational inertia.
+Rigid bodies are obviously not flexible. We can break down rigid body motion
+into translational motion, and rotational motion (when dealing with particles, we
+only have translational motion). Rotational motion can further be broken down
+into simple rotations and general rotations. 
+
+Translation of a rigid body is defined as a motion where the orientation of the
+body does not change during the motion; or during the motion any line segment
+would be parallel to itself at the start of the motion.
+
+Simple rotations are rotations in which the orientation of the body may change,
+but there is always one line which remains parallel to itself at the start of
+the motion.
+
+General rotations are rotations which there is not always one line parallel to
+itself at the start of the motion.
+
+Angular Velocity
+----------------
+
+The angular velocity of a rigid body refers to the rate of change of its
+orientation. The angular velocity of a body is written down as:
+:math:`^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}`, or the angular velocity of
+:math:`\mathbf{B}` in :math:`\mathbf{N}`, which is a vector. Note that here,
+the term rigid body was used, but reference frames can also have angular
+velocities. Further discussion of the distinction between a rigid body and a
+reference frame will occur later when describing the code representation.
+
+Angular velocity is defined as being positive in the direction which causes the
+orientation angles to increase (for simple rotations, or series of simple
+rotations). 
+
+.. % we need an image here which is shows a rigid body undergoing a simple
+.. % rotation, with the axis highlighted, and the angular velocity vector
+.. % written out (as like qdot n1> or something)
+
+The angular velocity vector represents the time derivative of the orientation.
+As a time derivative vector quantity, like those covered in the Vector &
+ReferenceFrame documentation, this quantity (angular velocity) needs to be
+defined in a reference frame. That is what the :math:`\mathbf{N}` is in the
+above definition of angular velocity; the frame in which the angular velocity
+is defined in.
+
+The angular velocity of :math:`\mathbf{B}` in :math:`\mathbf{N}` can also be
+defined by:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} =
+  (frac{^{\mathbf{N}}d \mathbf{\hat{b_y}}}{dt}\cdot\mathbf{\hat{b_z}}
+  )\mathbf{\hat{b_x}} + (frac{^{\mathbf{N}}d \mathbf{\hat{b_z}}}{dt}\cdot
+  \mathbf{\hat{b_x}})\mathbf{\hat{b_y}} + (frac{^{\mathbf{N}}d
+  \mathbf{\hat{b_x}}}{dt}\cdot\mathbf{\hat{b_y}})\mathbf{\hat{b_z}}
+
+It is also common for a body's angular velocity to be written as:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} = w_x \mathbf{\hat{b_x}} +
+  w_y \mathbf{\hat{b_y}} + w_z \mathbf{\hat{b_z}}
+
+There are a few additional important points relating to angular velocity. The
+first is the addition theorem for angular velocities, a way of relating the
+angular velocities of multiple bodies and frames. The theorem follows:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{D}} = 
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{A}} +
+  ^{\mathbf{A}}\mathbf{\omega}^{\mathbf{B}} +
+  ^{\mathbf{B}}\mathbf{\omega}^{\mathbf{C}} +
+  ^{\mathbf{C}}\mathbf{\omega}^{\mathbf{D}}
+
+This is also shown in the following example:
+
+.. % image showing multiple bodies with angular velocities, etc...
+
+This theorem makes defining angular velocities of multibody systems much
+easier, as the angular velocity of a body in a chain needs to only be defined
+to the previous body in order to be fully defined (and the first body needs
+to be defined in the desired reference frame). The following example shows how
+using this theorem can be easier.
+
+.. % a more complicated example with multiple bodies using addition theorem
+
+It is very important to remember to only use this with angular velocities; you
+cannot use this theorem with the velocities of points.
+
+There is another theorem commonly used: the derivative theorem. It provides an
+alternative method (which can be easier) to calculate the time derivative of a
+vector in a reference frame:
+
+.. math::
+  \frac{^{\mathbf{N}} d \mathbf{v}}{dt} = \frac{^{\mathbf{B}} d \mathbf{v}}{dt}
+  + ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} \times \mathbf{v}
+
+The vector :math:`\mathbf{v}` can be any vector quantity: a position vector,
+a velocity vector, angular velocity vector, etc. Instead of taking the time
+derivative of the vector in :math:`\mathbf{N}`, we take it in
+:math:`\mathbf{B}`, where :math:`\mathbf{B}` can be any reference frame or
+body, usually one in which it is easy to take the derivative on
+:math:`\mathbf{v}` in (:math:`\mathbf{v}` is usually composed only of the basis
+vector set belonging to :math:`\mathbf{B}`). Then we add the cross product of
+the angular velocity of our newer frame,
+:math:`^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}` and our vector quantity
+:math:`\mathbf{v}`. Again, you can choose any alternative frame for this.
+Examples follow:
+
+.. % need multiple examples here showing the derivative theorem
+
+
+Translational Motion
+--------------------
+
+If a body :math:`\mathbf{B}` is moving in a reference frame :math:`\mathbf{N}`,
+purely translational motion is that in which the direction cosine matrix
+relating :math:`\mathbf{B}` to :math:`\mathbf{N}`,
+:math:`^{\mathbf{N}}\mathbf{C}^{\mathbf{B}}` is constant, or the angular
+velocity of :math:`\mathbf{B}` in :math:`\mathbf{N}`,
+:math:`^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}`, is 0. 
+
+
+
+
+
+
