@@ -1352,8 +1352,10 @@ class Vector(object):
 
 class MechanicsStrPrinter(StrPrinter):
     def _print_Derivative(self, e):
+        from sympy.core.function import UndefinedFunction
         t = dynamicsymbols._t
-        if (t in e.variables) & isinstance(e.args[0], Function):
+        if (bool([i == t for i in e.variables]) &
+            isinstance(type(e.args[0]), UndefinedFunction)):
             ol = str(e.args[0].func)
             for i, v in enumerate(e.variables):
                 ol += '\''
@@ -1365,7 +1367,9 @@ class MechanicsStrPrinter(StrPrinter):
         from sympy.core.function import UndefinedFunction
         t = dynamicsymbols._t
         temp = StrPrinter().doprint(e)
-        return temp.replace('(t)', '')
+        if isinstance(type(e), UndefinedFunction):
+            return temp.replace('(t)', '')
+        return temp
 
 
 def dynamicsymbols(names, level=0):
