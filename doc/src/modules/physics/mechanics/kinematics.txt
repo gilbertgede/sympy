@@ -15,7 +15,7 @@ representation of a physical object which has mass and rotational inertia.
 Rigid bodies are obviously not flexible. We can break down rigid body motion
 into translational motion, and rotational motion (when dealing with particles, we
 only have translational motion). Rotational motion can further be broken down
-into simple rotations and general rotations. 
+into simple rotations and general rotations.
 
 Translation of a rigid body is defined as a motion where the orientation of the
 body does not change during the motion; or during the motion any line segment
@@ -41,7 +41,7 @@ reference frame will occur later when describing the code representation.
 
 Angular velocity is defined as being positive in the direction which causes the
 orientation angles to increase (for simple rotations, or series of simple
-rotations). 
+rotations).
 
 .. % we need an image here which is shows a rigid body undergoing a simple
 .. % rotation, with the axis highlighted, and the angular velocity vector
@@ -59,9 +59,9 @@ defined by:
 
 .. math::
   ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} =
-  (frac{^{\mathbf{N}}d \mathbf{\hat{b_y}}}{dt}\cdot\mathbf{\hat{b_z}}
-  )\mathbf{\hat{b_x}} + (frac{^{\mathbf{N}}d \mathbf{\hat{b_z}}}{dt}\cdot
-  \mathbf{\hat{b_x}})\mathbf{\hat{b_y}} + (frac{^{\mathbf{N}}d
+  (\frac{^{\mathbf{N}}d \mathbf{\hat{b_y}}}{dt}\cdot\mathbf{\hat{b_z}}
+  )\mathbf{\hat{b_x}} + (\frac{^{\mathbf{N}}d \mathbf{\hat{b_z}}}{dt}\cdot
+  \mathbf{\hat{b_x}})\mathbf{\hat{b_y}} + (\frac{^{\mathbf{N}}d
   \mathbf{\hat{b_x}}}{dt}\cdot\mathbf{\hat{b_y}})\mathbf{\hat{b_z}}
 
 It is also common for a body's angular velocity to be written as:
@@ -75,7 +75,7 @@ first is the addition theorem for angular velocities, a way of relating the
 angular velocities of multiple bodies and frames. The theorem follows:
 
 .. math::
-  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{D}} = 
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{D}} =
   ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{A}} +
   ^{\mathbf{A}}\mathbf{\omega}^{\mathbf{B}} +
   ^{\mathbf{B}}\mathbf{\omega}^{\mathbf{C}} +
@@ -119,15 +119,179 @@ Examples follow:
 .. % need multiple examples here showing the derivative theorem
 
 
-Translational Motion
+Angular Acceleration
 --------------------
+Angular acceleration refers to the time rate of change of the angular velocity
+vector. Just as the angular velocity vector is for a body and is specified in a
+frame, the angular acceleration vector is for a body and is specified in a
+frame: :math:`^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}}`, or the angular
+acceleration of :math:`\mathbf{B}` in :math:`\mathbf{N}`, which is a vector.
 
-If a body :math:`\mathbf{B}` is moving in a reference frame :math:`\mathbf{N}`,
-purely translational motion is that in which the direction cosine matrix
-relating :math:`\mathbf{B}` to :math:`\mathbf{N}`,
-:math:`^{\mathbf{N}}\mathbf{C}^{\mathbf{B}}` is constant, or the angular
-velocity of :math:`\mathbf{B}` in :math:`\mathbf{N}`,
-:math:`^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}`, is 0. 
+Calculating the angular acceleration is relatively straight forward:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}} =
+  \frac{^{\mathbf{N}} d ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}}{dt}
+
+Note that this can be calculated with the derivative theorem, and when the
+angular velocity is defined in a body fixed frame, becomes quite simple:
+
+.. math::
+
+  ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}} &=
+  \frac{^{\mathbf{N}} d ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}}{dt}\\
+
+  ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}} &=
+  \frac{^{\mathbf{B}} d ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}}{dt}
+  + ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} \times
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}\\
+
+  \textnormal{if } ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} &=
+  w_x \mathbf{\hat{b_x}} + w_y \mathbf{\hat{b_y}} + w_z \mathbf{\hat{b_z}}\\
+
+  \textnormal{then } ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}} &=
+  \frac{^{\mathbf{B}} d ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}}{dt}
+  + \underbrace{^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}} \times
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{B}}}_{
+  \textnormal{this is 0 by definition}}\\
+
+  ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}}&=\frac{d w_x}{dt}\mathbf{\hat{b_x}}
+  + \frac{d w_y}{dt}\mathbf{\hat{b_y}} + \frac{d w_z}{dt}\mathbf{\hat{b_z}}\\
+
+  ^{\mathbf{N}}\mathbf{\alpha}^{\mathbf{B}}&= \dot{w_x}\mathbf{\hat{b_x}} +
+  \dot{w_y}\mathbf{\hat{b_y}} + \dot{w_z}\mathbf{\hat{b_z}}
+
+Again, this is only for the case in which the angular velocity of the body is
+defined in body fixed components.
+
+Here are some examples of calculations of angular acceleration:
+
+.. % examples here of ang acc calculations
+
+
+Point Velocity & Acceleration
+-----------------------------
+
+Consider a point, :math:`P`: we can define some characteristics of the point.
+First, we can define a position vector from some other point to :math:`P`.
+Second, we can define the velocity vector of :math:`P` in a reference frame of
+our choice. Third, we can define the acceleration vector of :math:`P` in a
+reference frame of our choice.
+
+These three quantities are read as:
+
+.. math::
+  \mathbf{r}^{OP} \textnormal{, the position vector from } O
+  \textnormal{ to }P\\
+  ^{\mathbf{N}}\mathbf{v}^P \textnormal{, the velocity of } P
+  \textnormal{ in the reference frame } \mathbf{N}\\
+  ^{\mathbf{N}}\mathbf{a}^P \textnormal{, the acceleration of } P
+  \textnormal{ in the reference frame } \mathbf{N}\\
+
+Note that the position vector does not have a frame associated with it; this is
+because there is no time derivative involved, unlike the velocity and
+acceleration vectors.
+
+We can find these quantities for a simple example easily:
+
+.. image:: kin_1.png
+
+.. math::
+  \textnormal{Let's define: }
+  \mathbf{r}^{OP} &= q_x \mathbf{\hat{n_x}} + q_y \mathbf{\hat{n_y}}\\
+  ^{\mathbf{N}}\mathbf{v}^P &= \frac{^{\mathbf{N}} d \mathbf{r}^{OP}}{dt}\\
+  \textnormal{then we can calculate: }
+  ^{\mathbf{N}}\mathbf{v}^P &= \dot{q_x}\mathbf{\hat{n_x}} +
+  \dot{q_y}\mathbf{\hat{n_y}}\\
+  \textnormal{and :}
+  ^{\mathbf{N}}\mathbf{a}^P &= \frac{^{\mathbf{N}} d
+  ^{\mathbf{N}}\mathbf{v}^P}{dt}\\
+  ^{\mathbf{N}}\mathbf{a}^P &= \ddot{q_x}\mathbf{\hat{n_x}} +
+  \ddot{q_y}\mathbf{\hat{n_y}}\\
+
+It is critical to understand in the above example that the point :math:`O` is
+fixed in the reference frame :math:`\mathbf{N}`. There is no addition theorem
+for translational velocities; alternatives will be discussed later though.
+Also note that the position of every point might not
+always need to be defined to form the dynamic equations of motion. 
+When you don't want to define the position vector of a point, you can start by
+just defining the velocity vector. For the above example:
+
+.. math::
+  \textnormal{Let us instead define the velocity vector as: }
+  ^{\mathbf{N}}\mathbf{v}^P &= u_x \mathbf{\hat{n_x}} +
+  u_y \mathbf{\hat{n_y}}\\
+  \textnormal{then acceleration can be written as: }
+  ^{\mathbf{N}}\mathbf{a}^P &= \dot{u_x} \mathbf{\hat{n_x}} +
+  \dot{u_y} \mathbf{\hat{n_y}}\\
+
+
+There will often be cases when the velocity of a point is desired and a related
+point's velocity is known. For the cases in which we have two points fixed on a
+rigid body, we use the 2-Point Theorem:
+
+.. image:: kin_2pt.png
+
+Let's say we know the velocity of the point :math:`S` and the angular
+velocity of the body :math:`\mathbf{B}`, both defined in the reference frame
+:math:`\mathbf{N}`. We can calculate the velocity and acceleration 
+of the point :math:`P` in :math:`\mathbf{N}` as follows:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{v}^P &= ^\mathbf{N}\mathbf{v}^S +
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{SP}\\
+  ^{\mathbf{N}}\mathbf{a}^P &= ^\mathbf{N}\mathbf{a}^S +
+  ^\mathbf{N}\mathbf{\alpha}^\mathbf{B} \times \mathbf{r}^{SP} + 
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times
+  (^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{SP})\\
+
+When only one of the two points is fixed on a body, the 1 point theorem is used
+instead. 
+
+.. image:: kin_1pt.png
+
+Here, the velocity of point :math:`S` is known in the frame :math:`\mathbf{N}`,
+the angular velocity of :math:`\mathbf{B}` is known in :math:`\mathbf{N}`, and
+the velocity of the point :math:`P` is known in the frame associated with body
+:math:`\mathbf{B}`. We can then write the velocity and acceleration of
+:math:`P` in :math:`\mathbf{N}` as:
+
+.. math::
+  ^{\mathbf{N}}\mathbf{v}^P &= ^\mathbf{B}\mathbf{v}^P +
+  ^\mathbf{N}\mathbf{v}^S + ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times
+  \mathbf{r}^{SP}\\
+
+  ^{\mathbf{N}}\mathbf{a}^P &= ^\mathbf{B}\mathbf{a}^S +
+  ^\mathbf{N}\mathbf{a}^O + ^\mathbf{N}\mathbf{\alpha}^\mathbf{B}
+  \times \mathbf{r}^{SP} + ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times
+  (^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{SP}) +
+  2 ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times ^\mathbf{B} \mathbf{v}^P \\
+
+
+Examples of applications of the 1 point and 2 point theorem follow.
+
+.. % put some examples here
+
+
+A final topic in the description of velocities of points is that of rolling, or
+rather, rolling without slip. Two bodies are said to be rolling without slip if
+and only if the point of contact on each body has the same velocity in another
+frame. See the following figure:
+
+.. image:: kin_rolling.png
+
+This is commonly used to form the velocity of a point on one object rolling on
+another fixed object, such as in the following example:
+
+.. % rolling disc kinematics here
+
+
+Kinematics in SymPy's Mechanics
+===============================
+
+It should be clear by know that the topic of kinematics here has been mostly
+describing the correct way to manipulate vectors into representing the
+velocities of points.
 
 
 

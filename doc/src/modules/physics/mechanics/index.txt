@@ -35,7 +35,7 @@ Contents
     kane.txt
     reference.txt
 
-The Point of Physics Mechanics
+The Point of Physics.Mechanics
 ==============================
 
 .. % Put an example here

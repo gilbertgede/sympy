@@ -340,7 +340,7 @@ associated basis vectors, their direction cosine matrix can be defined as:
   C_{xx} & C_{xy} & C_{xz}\\
   C_{yx} & C_{yy} & C_{yz}\\
   C_{zx} & C_{zy} & C_{zz}\\
-  \end{array} \rbrk = 
+  \end{array} \rbrk =
   \lbrk \begin{array}{ccc}
   \mathbf{\hat{a_x}}\cdot\mathbf{\hat{b_x}} &
   \mathbf{\hat{a_x}}\cdot\mathbf{\hat{b_y}} &
@@ -351,7 +351,7 @@ associated basis vectors, their direction cosine matrix can be defined as:
   \mathbf{\hat{a_z}}\cdot\mathbf{\hat{b_x}} &
   \mathbf{\hat{a_z}}\cdot\mathbf{\hat{b_y}} &
   \mathbf{\hat{a_z}}\cdot\mathbf{\hat{b_z}}\\
-  \end{array} \rbrk 
+  \end{array} \rbrk
 
 Additionally, the direction cosine matrix is orthogonal, in that:
 
@@ -419,9 +419,9 @@ An example of vector calculus:
 
 .. image:: vec_simp_der.png
 
-In this example we have two bodies, each with an attached reference frame. 
+In this example we have two bodies, each with an attached reference frame.
 We will say that :math:`\theta` and :math:`x` are functions of time.
-We wish to know the time derivative of vector :math:`\mathbf{c}` in both the 
+We wish to know the time derivative of vector :math:`\mathbf{c}` in both the
 :math:`\mathbf{A}` and :math:`\mathbf{B}` frames.
 
 First, we need to define :math:`\mathbf{c}`;
@@ -437,7 +437,7 @@ To take the derivative in the :math:`\mathbf{A}` frame, we have to first relate
 the two frames:
 
 .. math::
-  ^{\mathbf{A}} \mathbf{C} ^{\mathbf{B}} = 
+  ^{\mathbf{A}} \mathbf{C} ^{\mathbf{B}} =
   \lbrk \begin{array}{ccc}
   cos(\theta) & 0 & sin(\theta)\\
   0 & 1 & 0\\
@@ -451,10 +451,10 @@ Now we can do the following:
   \mathbf{\hat{a_x}})}{dt} \mathbf{\hat{a_x}} + \frac{d (\mathbf{c} \cdot
   \mathbf{\hat{a_y}})}{dt} \mathbf{\hat{a_y}} + \frac{d (\mathbf{c} \cdot
   \mathbf{\hat{a_z}})}{dt} \mathbf{\hat{a_z}}\\
-  &= \frac{d (cos(\theta) x)}{dt} \mathbf{\hat{a_x}} + 
-  \frac{d (l)}{dt} \mathbf{\hat{a_y}} + 
+  &= \frac{d (cos(\theta) x)}{dt} \mathbf{\hat{a_x}} +
+  \frac{d (l)}{dt} \mathbf{\hat{a_y}} +
   \frac{d (-sin(\theta) x)}{dt} \mathbf{\hat{a_z}}\\
-  &= (-\dot{\theta}sin(\theta)x + cos(\theta)\dot{x}) \mathbf{\hat{a_x}} + 
+  &= (-\dot{\theta}sin(\theta)x + cos(\theta)\dot{x}) \mathbf{\hat{a_x}} +
   (\dot{\theta}cos(\theta)x + sin(\theta)\dot(x)) \mathbf{\hat{a_z}}
 
 Note that this is the time derivative of :math:`\mathbf{c}` in
@@ -474,8 +474,8 @@ defining vectors in the more complex forms can vastly slow down formulation of
 the equations of motion and increase their length, sometimes to a point where
 they cannot be shown on screen.
 
-Using Vectors and Reference Frames in Mechanics
-===============================================
+Using Vectors and Reference Frames in SymPy's Mechanics
+=======================================================
 
 We have waited until after all of the relevant mathematical relationships have
 been defined for vectors and reference frames to introduce code. This is due to
@@ -660,10 +660,10 @@ dynamic symbol, with a suffix to denote time differentiation.
   >>> q1, q2, q3 = dynamicsymbols('q1 q2 q3')
   >>> diff(q1, Symbol('t'))
   q1d
-  
+
 ``DynamicSymbol`` appends a ``'d'`` to the end of the name to denote
 differentiation. For this reason, it is recommended to avoid using a name for
-your ``DynamicSymbol`` objects which ends in 'd'. 
+your ``DynamicSymbol`` objects which ends in 'd'.
 ``DynamicSymbol`` should be used to represent any time varying quantity in
 :mod:`mechanics`, whether it is a coordinate, varying position, or force.
 The primary use of ``DynamicSymbol`` is for speeds and coordinates (of which
@@ -708,12 +708,12 @@ frames though. That is why ``args`` is a list; it has as many elements in the
 list as there are unique ``ReferenceFrames`` in its components, i.e. if there
 are ``A`` and ``B`` frame basis vectors in our new vector, ``args`` is of
 length 2; if it has ``A``, ``B``, and ``C`` frame basis vector, ``args`` is of
-length three. 
+length three.
 
 Each element in the ``args`` list is a tuple; the first element is a SymPy
 ``Matrix`` (this is where the measure numbers for each set of basis vectors are
 stored) and the second element is a ``ReferenceFrame`` to associate those
-measure numbers with.  
+measure numbers with.
 
 ``ReferenceFrame`` stores a few things. First, it stores the name you supply it
 on creation (``name`` attribute). It also stores the direction cosine matrices,
@@ -724,6 +724,6 @@ method after creation. The direction cosine matrices are represented as SymPy
 bi-directionally; in that when you orient ``A`` to ``N`` you are setting ``A``'s
 orientation dictionary to include ``N`` and its ``Matrix``, but also you also
 are setting ``N``'s orientation dictionary to include ``A`` and its ``Matrix``
-(that dcm being the transpose of the other). 
+(that dcm being the transpose of the other).
 
 
