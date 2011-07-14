@@ -213,7 +213,7 @@ It is critical to understand in the above example that the point :math:`O` is
 fixed in the reference frame :math:`\mathbf{N}`. There is no addition theorem
 for translational velocities; alternatives will be discussed later though.
 Also note that the position of every point might not
-always need to be defined to form the dynamic equations of motion. 
+always need to be defined to form the dynamic equations of motion.
 When you don't want to define the position vector of a point, you can start by
 just defining the velocity vector. For the above example:
 
@@ -234,19 +234,19 @@ rigid body, we use the 2-Point Theorem:
 
 Let's say we know the velocity of the point :math:`S` and the angular
 velocity of the body :math:`\mathbf{B}`, both defined in the reference frame
-:math:`\mathbf{N}`. We can calculate the velocity and acceleration 
+:math:`\mathbf{N}`. We can calculate the velocity and acceleration
 of the point :math:`P` in :math:`\mathbf{N}` as follows:
 
 .. math::
   ^{\mathbf{N}}\mathbf{v}^P &= ^\mathbf{N}\mathbf{v}^S +
   ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{SP}\\
   ^{\mathbf{N}}\mathbf{a}^P &= ^\mathbf{N}\mathbf{a}^S +
-  ^\mathbf{N}\mathbf{\alpha}^\mathbf{B} \times \mathbf{r}^{SP} + 
+  ^\mathbf{N}\mathbf{\alpha}^\mathbf{B} \times \mathbf{r}^{SP} +
   ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times
   (^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{SP})\\
 
 When only one of the two points is fixed on a body, the 1 point theorem is used
-instead. 
+instead.
 
 .. image:: kin_1pt.png
 
@@ -270,7 +270,78 @@ the velocity of the point :math:`P` is known in the frame associated with body
 
 Examples of applications of the 1 point and 2 point theorem follow.
 
-.. % put some examples here
+.. image:: kin_2.png
+
+This example has a disc translating and rotating in a plane. We can easily
+define the angular velocity of the body :math:`\mathbf{B}` and velocity of the
+point :math:`O`:
+
+.. math::
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} &= u_3 \mathbf{\hat{n_z}} = u_3
+  \mathbf{\hat{b_z}}\\
+  ^\mathbf{N}\mathbf{v}^O &= u_1 \mathbf{\hat{n_x}} + u_2 \mathbf{\hat{n_y}}\\
+
+and accelerations can be written as:
+
+.. math::
+  ^\mathbf{N}\mathbf{\alpha}^\mathbf{B} &= \dot{u_3} \mathbf{\hat{n_z}} =
+  \dot{u_3} \mathbf{\hat{b_z}}\\
+  ^\mathbf{N}\mathbf{a}^O &= \dot{u_1} \mathbf{\hat{n_x}} + \dot{u_2}
+  \mathbf{\hat{n_y}}\\
+
+We can use the 2 point theorem to calculate the velocity and accleration of
+point :math:`P` now.
+
+.. math::
+  \mathbf{r}^{OP} &= R \mathbf{\hat{b_x}}\\
+  ^\mathbf{N}\mathbf{v}^P &= ^\mathbf{N}\mathbf{v}^O +
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{OP}\\
+  ^\mathbf{N}\mathbf{v}^P &= u_1 \mathbf{\hat{n_x}} + u_2 \mathbf{\hat{n_y}}
+  + u_3 \mathbf{\hat{b_z}} \times R \mathbf{\hat{b_x}} = u_1
+  \mathbf{\hat{n_x}} + u_2 \mathbf{\hat{n_y}} + u_3 R \mathbf{\hat{b_y}}\\
+  ^{\mathbf{N}}\mathbf{a}^P &= ^\mathbf{N}\mathbf{a}^O +
+  ^\mathbf{N}\mathbf{\alpha}^\mathbf{B} \times \mathbf{r}^{OP} +
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times
+  (^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{OP})\\
+  ^{\mathbf{N}}\mathbf{a}^P &= \dot{u_1} \mathbf{\hat{n_x}} + \dot{u_2}
+  \mathbf{\hat{n_y}} + \dot{u_3}\mathbf{\hat{b_z}}\times R \mathbf{\hat{b_x}}
+  +u_3\mathbf{\hat{b_z}}\times(u_3\mathbf{\hat{b_z}}\times
+  R\mathbf{\hat{b_x}})\\
+  ^{\mathbf{N}}\mathbf{a}^P &= \dot{u_1} \mathbf{\hat{n_x}} + \dot{u_2}
+  \mathbf{\hat{n_y}} + R\dot{u_3}\mathbf{\hat{b_y}} - R u_3^2
+  \mathbf{\hat{b_x}}\\
+
+.. image:: kin_3.png
+
+
+In this example we have a double pendulum. We can use the two point theorem
+twice here in order to find the velocity of points :math:`Q` and :math:`P`;
+point :math:`O`'s velocity is zero in :math:`\mathbf{N}`.
+
+.. math::
+  \mathbf{r}^{OQ} &= l \mathbf{\hat{b_x}}\\
+  \mathbf{r}^{QP} &= l \mathbf{\hat{c_x}}\\
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} &= u_1 \mathbf{\hat{b_z}}\\
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{C} &= u_2 \mathbf{\hat{c_z}}\\
+  ^\mathbf{N}\mathbf{v}^Q &= ^\mathbf{N}\mathbf{v}^O +
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{B} \times \mathbf{r}^{OQ}\\
+  ^\mathbf{N}\mathbf{v}^Q &= u_1 l \mathbf{\hat{b_y}}\\
+  ^\mathbf{N}\mathbf{v}^P &= ^\mathbf{N}\mathbf{v}^Q +
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{C} \times \mathbf{r}^{QP}\\
+  ^\mathbf{N}\mathbf{v}^Q &= u_1 l \mathbf{\hat{b_y}} +u_2 \mathbf{\hat{c_z}}
+  \times l \mathbf{\hat{c_x}}\\
+  ^\mathbf{N}\mathbf{v}^Q &= u_1 l\mathbf{\hat{b_y}}+u_2 l\mathbf{\hat{c_y}}\\
+
+.. image:: kin_4.png
+
+In this example we have a particle moving on a ring; the ring is supported by a
+rod which can rotate about the :math:`\mathbf{\hat{n_x}}` axis. First we use
+the two point theorem to find the velocity of the center point of the ring,
+:math:`Q`, then use the 1 point theorem to find the velocity of the particle on
+the ring.
+
+.. % this picture need to be redrawn with an additional ficticous reference
+.. % frame for the particle
 
 
 A final topic in the description of velocities of points is that of rolling, or
@@ -289,7 +360,7 @@ another fixed object, such as in the following example:
 Kinematics in SymPy's Mechanics
 ===============================
 
-It should be clear by know that the topic of kinematics here has been mostly
+It should be clear by now that the topic of kinematics here has been mostly
 describing the correct way to manipulate vectors into representing the
 velocities of points.
 
