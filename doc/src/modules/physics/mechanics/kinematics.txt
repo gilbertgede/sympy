@@ -43,9 +43,7 @@ Angular velocity is defined as being positive in the direction which causes the
 orientation angles to increase (for simple rotations, or series of simple
 rotations).
 
-.. % we need an image here which is shows a rigid body undergoing a simple
-.. % rotation, with the axis highlighted, and the angular velocity vector
-.. % written out (as like qdot n1> or something)
+.. image:: kin_angvel1.png
 
 The angular velocity vector represents the time derivative of the orientation.
 As a time derivative vector quantity, like those covered in the Vector &
@@ -83,15 +81,34 @@ angular velocities of multiple bodies and frames. The theorem follows:
 
 This is also shown in the following example:
 
-.. % image showing multiple bodies with angular velocities, etc...
+.. image:: kin_angvel2.png
+
+.. math::
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{A}} &= 0\\
+  ^{\mathbf{A}}\mathbf{\omega}^{\mathbf{B}} &= \dot{q_1} \mathbf{\hat{a_x}}\\
+  ^{\mathbf{B}}\mathbf{\omega}^{\mathbf{C}} &= - \dot{q_2} \mathbf{\hat{b_z}}\\
+  ^{\mathbf{C}}\mathbf{\omega}^{\mathbf{D}} &= \dot{q_3} \mathbf{\hat{c_y}}\\
+  ^{\mathbf{N}}\mathbf{\omega}^{\mathbf{D}} &= \dot{q_1} \mathbf{\hat{a_x}}
+  - \dot{q_2} \mathbf{\hat{b_z}} + \dot{q_3} \mathbf{\hat{c_y}}\\
+
+Note the signs used in the angular velocity definitions, which are related to
+how the displacement angle is defined in this case.
+
 
 This theorem makes defining angular velocities of multibody systems much
 easier, as the angular velocity of a body in a chain needs to only be defined
 to the previous body in order to be fully defined (and the first body needs
-to be defined in the desired reference frame). The following example shows how
-using this theorem can be easier.
+to be defined in the desired reference frame). The following figure shows an
+example of when using this theorem can make things easier.
 
-.. % a more complicated example with multiple bodies using addition theorem
+.. image:: kin_angvel3.png
+
+Here we can easily write the angular velocity of the body
+:math:`\mathbf{D}` in the reference frame of the first body :math:`\mathbf{A}`:
+
+.. math::
+  ^\mathbf{A}\mathbf{\omega}^\mathbf{D} = w_1 \mathbf{\hat{p_1}} +
+  w_2 \mathbf{\hat{p_2}} + w_3 \mathbf{\hat{p_3}}\\
 
 It is very important to remember to only use this with angular velocities; you
 cannot use this theorem with the velocities of points.
@@ -164,9 +181,6 @@ angular velocity is defined in a body fixed frame, becomes quite simple:
 Again, this is only for the case in which the angular velocity of the body is
 defined in body fixed components.
 
-Here are some examples of calculations of angular acceleration:
-
-.. % examples here of ang acc calculations
 
 
 Point Velocity & Acceleration
@@ -340,9 +354,23 @@ the two point theorem to find the velocity of the center point of the ring,
 :math:`Q`, then use the 1 point theorem to find the velocity of the particle on
 the ring.
 
-.. % this picture need to be redrawn with an additional ficticous reference
-.. % frame for the particle
-
+.. math::
+  ^\mathbf{N}\mathbf{\omega}^\mathbf{C} &= u_1 \mathbf{\hat{n_x}}\\
+  \mathbf{r}^{OQ} &= -l \mathbf{\hat{c_z}}\\
+  ^\mathbf{N}\mathbf{v}^Q &= u_1 l \mathbf{\hat{c_y}}\\
+  \mathbf{r}^{QP} &= R(cos(q_2) \mathbf{\hat{c_x}}
+  + sin(q_2) \mathbf{\hat{c_y}} )\\
+  ^\mathbf{C}\mathbf{v}^P &= R u_2 (-sin(q_2) \mathbf{\hat{c_x}}
+  + cos(q_2) \mathbf{\hat{c_y}} )\\
+  ^\mathbf{N}\mathbf{v}^P &= ^\mathbf{C}\mathbf{v}^P +^\mathbf{N}\mathbf{v}^Q
+  + ^\mathbf{N}\mathbf{\omega}^\mathbf{C} \times \mathbf{r}^{QP}\\
+  ^\mathbf{N}\mathbf{v}^P &= R u_2 (-sin(q_2) \mathbf{\hat{c_x}}
+  + cos(q_2) \mathbf{\hat{c_y}} ) + u_1 l \mathbf{\hat{c_y}} +
+  u_1 \mathbf{\hat{c_x}} \times R(cos(q_2) \mathbf{\hat{c_x}}
+  + sin(q_2) \mathbf{\hat{c_y}}\\
+  ^\mathbf{N}\mathbf{v}^P &= - R u_2 sin(q_2) \mathbf{\hat{c_x}}
+  + (R u_2 cos(q_2)+u_1 l)\mathbf{\hat{c_y}} + R u_1 sin(q_2)
+  \mathbf{\hat{c_z}}\\
 
 A final topic in the description of velocities of points is that of rolling, or
 rather, rolling without slip. Two bodies are said to be rolling without slip if
@@ -362,7 +390,146 @@ Kinematics in SymPy's Mechanics
 
 It should be clear by now that the topic of kinematics here has been mostly
 describing the correct way to manipulate vectors into representing the
-velocities of points.
+velocities of points. Within :mod:`mechanics` there are convienent methods for
+storing thes velocities associated with frames and points. We'll now revisit
+the above examples and show how to represent them in :mod:`sympy`.
+
+The topic of reference frame creation has already been covered. When a
+``ReferenceFrame`` is created though, it automatically calculates the angular
+velocity of the frame using the time derivative of the DCM and the angular
+velocity definition. ::
+
+  >>> from sympy import Symbol, sin, cos
+  >>> from sympy.physics.mechanics import *
+  >>> N = ReferenceFrame('N')
+  >>> q1 = dynamicsymbols('q1')
+  >>> A = N.orientnew('A', 'Simple', q1, 'x')
+  >>> A.ang_vel_in(N)
+  (q1d)*A.x
+
+Note that the angular velocity can be defined in an alternate way: ::
+
+  >>> B = ReferenceFrame('B')
+  >>> u1 = dynamicsymbols('u1')
+  >>> B.set_ang_vel(N, u1 * B.y)
+  >>> B.ang_vel_in(N)
+  (u1)*B.y
+  >>> N.ang_vel_in(B)
+  (-u1)*B.y
+
+Both upon frame creation during ``orientnew`` and when calling ``set_ang_vel``,
+the angular velocity is set in both frames involved, as seen above.
+
+.. image:: kin_angvel2.png
+
+Here we have multiple bodies with angular velocities defined relative to each
+other. This is coded as: ::
+
+  >>> N = ReferenceFrame('N')
+  >>> A = ReferenceFrame('A')
+  >>> B = ReferenceFrame('B')
+  >>> C = ReferenceFrame('C')
+  >>> D = ReferenceFrame('D')
+  >>> u1, u2, u3 = dynamicsymbols('u1 u2 u3')
+  >>> A.set_ang_vel(N, 0)
+  >>> B.set_ang_vel(A, u1 * A.x)
+  >>> C.set_ang_vel(B, -u2 * B.z)
+  >>> D.set_ang_vel(C, u3 * C.y)
+  >>> D.ang_vel_in(C)
+  (u3)*C.y + (-u2)*B.z + (u1)*A.x 
+
+In :mod:`mechanics` the shortest path between two frames is used when finding
+the angular velocity. That would mean if we went back and set: ::
+
+  >>> D.set_ang_vel(N, 0)
+  >>> D.ang_vel_in(N)
+  0
+
+The path that was just defined is what is used.
+This can cause problems though, as now the angular
+velocity definitions are inconsistent. It is reccomended that you avoid
+doing this.
+
+.. % put some stuff to go with derivative theorem here
+
+Points are a translational analog to the rotational ``ReferenceFrame``.
+Creating a ``Point`` can be done in two ways, like ``ReferenceFrame``: ::
+
+  >>> O = Point('O')
+  >>> P = O.newpoint('P', 3 * N.x + N.y)
+  >>> P.pos_from(O)
+  (3)*N.x + N.y
+  >>> Q = Point('Q')
+  >>> Q.set_pos(P, N.z)
+  >>> Q.pos_from(P)
+  N.z
+  >>> Q.pos_from(O)
+  (3)*N.x + N.y + N.z
+
+Similar to ``ReferenceFrame``, the position vector between two points is found
+by the shortest path (number of intermediate points) between them. Unlike
+rotational motion, there is no addition theorem for the velocity of points. In
+order to have the velocity of a ``Point`` in a ``ReferenceFrame``, you have to
+set the value. ::
+
+  >>> O = Point('O')
+  >>> O.set_vel(N, u1*N.x)
+  >>> O.vel(N)
+  (u1)*N.x
+
+For both translational and rotational accelerations, the value is computed by
+taking the time derivative of the appropriate velocity, unless the user sets it
+otherwise.
+
+  >>> O.acc(N)
+  (u1d)*N.x
+  >>> O.set_acc(N, u2*u1*N.y)
+  >>> O.acc(N)
+  (u1*u2)*N.y
+
+
+Next is a description of the 2 point and 1 point theorems, as used in
+``sympy``.
+
+.. image:: kin_2.png
+
+First is the translating, rotating disc. ::
+
+  >>> N = ReferenceFrame('N')
+  >>> u1, u2, u3 = dynamicsymbols('u1 u2 u3')
+  >>> R = Symbol('R')
+  >>> B = ReferenceFrame('B')
+  >>> O = Point('O')
+  >>> O.set_vel(N, u1 * N.x + u2 * N.y)
+  >>> P = O.newpoint('P', R * B.x)
+  >>> B.set_ang_vel(N, u3 * B.z)
+  >>> P.v2pt(O, N, B)
+  (u1)*N.x + (u2)*N.y + (u3*R)*B.y
+  >>> P.a2pt(O, N, B)
+  (u1d)*N.x + (u2d)*N.y + (-u3**2*R)*B.x + (u3d*R)*B.y
+
+We will also cover implementation of the 1 point theorem.
+
+.. image:: kin_4.png
+
+This is the particle moving on a ring, again. ::
+
+  >>> N = ReferenceFrame('N')
+  >>> u1, u2 = dynamicsymbols('u1 u2')
+  >>> q1, q2 = dynamicsymbols('q1 q2')
+  >>> l = Symbol('l')
+  >>> R = Symbol('R')
+  >>> C = N.orientnew('C', 'Simple', q1, 'x')
+  >>> C.set_ang_vel(N, u1 * N.x)
+  >>> O = Point('O')
+  >>> O.set_vel(N, 0)
+  >>> Q = O.newpoint('Q', -l * C.z)
+  >>> P = Q.newpoint('P', R * (cos(q2) * C.x + sin(q2) * C.y))
+  >>> P.set_vel(C, R * u2 * (-sin(q2) * C.x + cos(q2) * C.y))
+  >>> Q.v2pt(O, N, C)
+  >>> P.v1pt(Q, N, C)
+  (-u2*R*sin(q2))*C.x + (u1*l + u2*R*cos(q2))*C.y + (u1*R*sin(q1))*C.z
+
 
 
 
