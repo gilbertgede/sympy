@@ -96,11 +96,11 @@ class Point(object):
         >>> B = ReferenceFrame('B')
         >>> B.set_ang_vel(N, 5 * B.y)
         >>> O = Point('O')
-        >>> P = O.newpoint('P', q * B.x)
+        >>> P = O.locatenew('P', q * B.x)
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.a1pt(O, N, B)
-        (-25*q + q'')*B.x + (q2'')*B.y + (-10*q')*B.z
+        (-25*q + q'')*B.x + q2''*B.y - 10*q'*B.z
 
         """
 
@@ -148,10 +148,10 @@ class Point(object):
         >>> N = ReferenceFrame('N')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> O = Point('O')
-        >>> P = O.newpoint('P', 10 * B.x)
+        >>> P = O.locatenew('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.a2pt(O, N, B)
-        (-10*q'**2)*B.x + (10*q'')*B.y
+        - 10*q'**2*B.x + 10*q''*B.y
 
         """
 
@@ -182,7 +182,7 @@ class Point(object):
         >>> p1 = Point('p1')
         >>> p1.set_acc(N, 10 * N.x)
         >>> p1.acc(N)
-        (10)*N.x
+        10*N.x
 
         """
 
@@ -194,7 +194,7 @@ class Point(object):
                 return 0
         return self._acc_dict[frame]
 
-    def newpoint(self, name, value):
+    def locatenew(self, name, value):
         """Creates a new point with a position defined from this point.
 
         Parameters
@@ -210,7 +210,7 @@ class Point(object):
         >>> from sympy.physics.mechanics import ReferenceFrame, Point
         >>> N = ReferenceFrame('N')
         >>> P1 = Point('P1')
-        >>> P2 = P1.newpoint('P2', 10 * N.x)
+        >>> P2 = P1.locatenew('P2', 10 * N.x)
 
         """
 
@@ -239,7 +239,7 @@ class Point(object):
         >>> p2 = Point('p2')
         >>> p1.set_pos(p2, 10 * N.x)
         >>> p1.pos_from(p2)
-        (10)*N.x
+        10*N.x
 
         """
 
@@ -267,7 +267,7 @@ class Point(object):
         >>> p1 = Point('p1')
         >>> p1.set_acc(N, 10 * N.x)
         >>> p1.acc(N)
-        (10)*N.x
+        10*N.x
 
         """
 
@@ -294,7 +294,7 @@ class Point(object):
         >>> p2 = Point('p2')
         >>> p1.set_pos(p2, 10 * N.x)
         >>> p1.pos_from(p2)
-        (10)*N.x
+        10*N.x
 
         """
 
@@ -321,7 +321,7 @@ class Point(object):
         >>> p1 = Point('p1')
         >>> p1.set_vel(N, 10 * N.x)
         >>> p1.vel(N)
-        (10)*N.x
+        10*N.x
 
         """
 
@@ -362,11 +362,11 @@ class Point(object):
         >>> B = ReferenceFrame('B')
         >>> B.set_ang_vel(N, 5 * B.y)
         >>> O = Point('O')
-        >>> P = O.newpoint('P', q * B.x)
+        >>> P = O.locatenew('P', q * B.x)
         >>> P.set_vel(B, qd * B.x + q2d * B.y)
         >>> O.set_vel(N, 0)
         >>> P.v1pt(O, N, B)
-        (q')*B.x + (q2')*B.y + (-5*q)*B.z
+        q'*B.x + q2'*B.y - 5*q*B.z
 
         """
 
@@ -410,10 +410,10 @@ class Point(object):
         >>> N = ReferenceFrame('N')
         >>> B = N.orientnew('B', 'Simple', q, 3)
         >>> O = Point('O')
-        >>> P = O.newpoint('P', 10 * B.x)
+        >>> P = O.locatenew('P', 10 * B.x)
         >>> O.set_vel(N, 5 * N.x)
         >>> P.v2pt(O, N, B)
-        (5)*N.x + (10*q')*B.y
+        5*N.x + 10*q'*B.y
 
         """
 
@@ -442,7 +442,7 @@ class Point(object):
         >>> p1 = Point('p1')
         >>> p1.set_vel(N, 10 * N.x)
         >>> p1.vel(N)
-        (10)*N.x
+        10*N.x
 
         """
 
