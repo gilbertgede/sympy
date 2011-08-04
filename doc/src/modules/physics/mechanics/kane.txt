@@ -14,7 +14,7 @@ to describe a system. They are: holonomic constraints, non-holonomic
 constraints, kinematic differential equations, dynamic equations, and
 differentiated non-holonomic equations.
 
-:: math:
+.. math::
   \mathbf{f_h}(q, t) &= 0\\
   \mathbf{k_{nh}}(q, t) u + \mathbf{f_{nh}}(q, t) &= 0\\
   \mathbf{k_{k\dot{q}}}(q, t) \dot{q} + \mathbf{k_{ku}}(q, t) u +
@@ -22,7 +22,7 @@ differentiated non-holonomic equations.
   \mathbf{k_d}(q, t) \dot{u} + \mathbf{f_d}(q, \dot{q}, u, t) &= 0\\
   \mathbf{k_{dnh}}(q, t) \dot{u} + \mathbf{f_{dnh}}(q, \dot{q}, u, t) &= 0\\
 
-In mod:`mechanics` holonomic constraints are only used for the linearization
+In :mod:`mechanics` holonomic constraints are only used for the linearization
 process; it is assumed that they will be too complicated to solve for the
 dependent coordinate(s).
 
@@ -33,9 +33,9 @@ non-holonolic system with "o" total speeds and "m" motion constraints, we will
 get o - m equations. The mass-matrix/forcing equations are then augmented in
 the following fashion:
 
-:: math:
+.. math::
   \mathbf{M}(q, t) &= \begin{bmatrix} \mathbf{k_d}(q, t) \\
-  \mathbf{k_{dnh}}(q, t) \end{bmatrix}
+  \mathbf{k_{dnh}}(q, t) \end{bmatrix}\\
   \mathbf{f_{(orcing)}}(q, \dot{q}, u, t) &= \begin{bmatrix}
   - \mathbf{f_d}(q, \dot{q}, u, t) \\ - \mathbf{f_{dnh}}(q, \dot{q}, u, t)
   \end{bmatrix}\\
