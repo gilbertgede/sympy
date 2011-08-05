@@ -118,7 +118,6 @@ def mechanics_printing():
     >>> diff(f(t), t)
     Derivative(f(t), t)
     >>> mechanics_printing()
-    displayhook set
     >>> diff(f(t), t)
     f'
     >>> diff(f(x), x)
@@ -131,7 +130,6 @@ def mechanics_printing():
 
     import sys
     sys.displayhook = mprint
-    return 'displayhook set'
 
 def mprint(expr, **settings):
     """Function for printing of expressions generated in mechanics. """
@@ -200,7 +198,6 @@ def kinematic_equations(speeds, coords, rot_type, rot_order=''):
     >>> from sympy.physics.mechanics import dynamicsymbols, kinematic_equations
     >>> from sympy.physics.mechanics import mechanics_printing
     >>> mechanics_printing()
-    displayhook set
     >>> u1, u2, u3 = dynamicsymbols('u1 u2 u3')
     >>> q1, q2, q3 = dynamicsymbols('q1 q2 q3')
     >>> kinematic_equations([u1,u2,u3],[q1,q2,q3],'body','313')

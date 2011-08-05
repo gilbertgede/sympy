@@ -80,7 +80,6 @@ example follows: ::
 A dictionary returning the solved :math:`\dot{q}`'s can also be solved for: ::
 
   >>> mechanics_printing()
-  displayhook set
   >>> KM.kindiffdict()
   {q1': u1, q2': u2}
 
@@ -151,9 +150,16 @@ o) x (n + o), or square and the size of all coordinates and speeds. ::
 The forcing vector can be linearized as well; its jacobian is taken only with
 respect to the independent coordinates and speeds. The linearized forcing
 vector is of size (n + o) x (n - l + o - m), where l is the number of
-configuration constraints and m is the number of motion constraints. ::
+configuration constraints and m is the number of motion constraints. Two
+matrices are returned; the first is an "A" matrix, or the jacobian with respect
+to the independent states, the second is a "B" matrix, or the jacobian with
+respect to 'forces'; this can be an empty matrix if there are no 'forces'.
+Forces here are undefined functions of time (dynamic symbols); they are only
+allowed to be in the forcing vector and their derivatives are not allowed to be
+present. If dynamic symbols appear in the mass matrix or kinematic differential
+equations, an error with be raised. ::
 
-  >>> KM.linearize()
+  >>> KM.linearize()[0]
   [0, 1]
   [0, 0]
 
