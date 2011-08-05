@@ -73,14 +73,16 @@ Kinematic differential equations must also be supplied; there are to be
 provided as a list of expressions which are each equal to zero. A trivial
 example follows: ::
 
+  >>> KM.coords([q1, q2])
   >>> kd = [q1d - u1, q2d - u2]
   >>> KM.kindiffeq(kd)
 
 A dictionary returning the solved :math:`\dot{q}`'s can also be solved for: ::
 
-  >>> KM.kindiffdict()
   >>> mechanics_printing()
-  >>> {q1': u1, q2': u2}
+  displayhook set
+  >>> KM.kindiffdict()
+  {q1': u1, q2': u2}
 
 Turning on ``mechanics_printing()`` makes the expressions significantly
 shorter and is recommended.

@@ -226,6 +226,7 @@ class Kane(object):
             raise TypeError('Generalized coords. must be supplied in a list')
         self._q = inlist
         self._qdot = [diff(i, dynamicsymbols._t) for i in inlist]
+        return
 
     def speeds(self, inlist):
         """Supply all the generalized speeds in a list.

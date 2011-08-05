@@ -4,6 +4,7 @@ __all__ = ['cross',
            'outer',
            'inertia',
            'mechanics_printing',
+           'mprint',
            'mpprint',
            'mlatex',
            'kinematic_equations',
@@ -106,6 +107,9 @@ def mechanics_printing():
     Examples
     ========
 
+    >>> # 2 lines below are for tests to function properly
+    >>> import sys
+    >>> sys.displayhook = sys.__displayhook__
     >>> from sympy import Function, Symbol, diff
     >>> from sympy.physics.mechanics import mechanics_printing
     >>> f = Function('f')
@@ -119,6 +123,9 @@ def mechanics_printing():
     f'
     >>> diff(f(x), x)
     Derivative(f(x), x)
+    >>> # 2 lines below are for tests to function properly
+    >>> import sys
+    >>> sys.displayhook = sys.__displayhook__
 
     """
 
@@ -129,7 +136,12 @@ def mechanics_printing():
 def mprint(expr, **settings):
     """Function for printing of expressions generated in mechanics. """
     pr = MechanicsStrPrinter(settings)
-    print pr.doprint(expr)
+    outstr = pr.doprint(expr)
+
+    import __builtin__
+    if (outstr != 'None'):
+        __builtin__._ = outstr
+        print(outstr)
 
 def mpprint(expr, **settings):
     """Function for pretty printing of expressions generated in mechanics.
@@ -140,10 +152,10 @@ def mpprint(expr, **settings):
     """
 
     mp = MechanicsPrettyPrinter(settings)
-    print mp.doprint(expr)
+    print(mp.doprint(expr))
 
 def mlatex(expr, **settings):
-    """Function for printing latex representation of mechanics objects.
+    r"""Function for printing latex representation of mechanics objects.
 
     For latex representation of Vectors, Dyads, and dynamicsymbols.
 
@@ -153,7 +165,7 @@ def mlatex(expr, **settings):
     >>> from sympy.physics.mechanics import mlatex, ReferenceFrame
     >>> N = ReferenceFrame('N')
     >>> mlatex(N.x + N.y)
-    '\\\\mathbf{\\\\hat{n_{x}}} + \\\\mathbf{\\\\hat{n_{y}}}'
+    '\\mathbf{\\hat{n_{x}}} + \\mathbf{\\hat{n_{y}}}'
 
     """
 
@@ -182,6 +194,9 @@ def kinematic_equations(speeds, coords, rot_type, rot_order=''):
     Examples
     ========
 
+    >>> # 2 lines below are for tests to function properly
+    >>> import sys
+    >>> sys.displayhook = sys.__displayhook__
     >>> from sympy.physics.mechanics import dynamicsymbols, kinematic_equations
     >>> from sympy.physics.mechanics import mechanics_printing
     >>> mechanics_printing()
@@ -190,6 +205,9 @@ def kinematic_equations(speeds, coords, rot_type, rot_order=''):
     >>> q1, q2, q3 = dynamicsymbols('q1 q2 q3')
     >>> kinematic_equations([u1,u2,u3],[q1,q2,q3],'body','313')
     [-(u1*sin(q3) + u2*cos(q3))/sin(q2) + q1', -u1*cos(q3) + u2*sin(q3) + q2', (u1*sin(q3) + u2*cos(q3))*cos(q2)/sin(q2) - u3 + q3']
+    >>> # 2 lines below are for tests to function properly
+    >>> import sys
+    >>> sys.displayhook = sys.__displayhook__
 
     """
 
