@@ -7,13 +7,15 @@ __all__ = ['cross',
            'mprint',
            'mpprint',
            'mlatex',
-           'kinematic_equations']
+           'kinematic_equations',
+           'code_output']
 
 from sympy.physics.mechanics.essential import (Vector, Dyadic, ReferenceFrame,
                                                MechanicsStrPrinter,
                                                MechanicsPrettyPrinter,
                                                MechanicsLatexPrinter,
                                                dynamicsymbols)
+from sympy.physics.mechanics.kane import Kane
 from sympy import sympify, diff, sin, cos, Matrix
 
 def cross(vec1, vec2):
@@ -366,3 +368,274 @@ def kinematic_equations(speeds, coords, rot_type, rot_order=''):
     else:
         raise ValueError('Not an approved rotation type for this function')
 
+
+class code_output:
+    """
+    Class designed to generate code for numerical integration from a
+    sympy.physics.mechanics class which has generated equations of motion.
+
+    This is created by taking in an mechanics class which has generated
+    equations of motion (currently just the Kane class), and, with some options,
+    produces a file with simulation settings and another file which provides
+    a function which returns the time derivatives of the coordinates and speeds
+    (the right hand side function). The file containing the r.h.s. function can
+    be either run directly, or have its rhs function imported to another Python
+    script.
+
+    Code output options currently include:
+        NumPy/SciPy/Matplotlib
+
+    Parameters
+    ==========
+
+    eom_class : Kane (currently only supported class)
+        A class which has generated equations of motion already.
+    fname : string
+        The name of the file which will hold the r.h.s. function; the settings
+        name file will also be named off of this.
+
+    """
+
+    def __init__(self, eom_class, fname):
+        if not isinstance(eom_class, Kane):
+            raise TypeError('Need to supply a valid EoM generating object')
+
+        self._fname = fname
+        self._settings_fname = None
+
+        # States
+        self._q = eom_class._q + eom_class._qdep
+        self._u = eom_class._u + eom_class._udep
+        self._qu = self._q + self._u
+        # set initial conditions to 0
+        self._init_conds = [0] * len(self._qu)
+
+        # The actual equations
+        self._mm = eom_class.mass_matrix_full.subs(eom_class.kindiffdict())
+        self._f = eom_class.forcing_full.subs(eom_class.kindiffdict())
+
+        # Format these nicely to put into _find functions
+        mm_list = self._mm.tolist()
+        mm_list = [item for sublist in mm_list for item in sublist]
+        f_list = self._f.tolist()
+        f_list = [item for sublist in f_list for item in sublist]
+        templ = mm_list + f_list
+        # parameters which need numerical values (basically, sympy symbols)
+        self._params = eom_class._find_othersymbols(templ)
+        self._param_vals = [0] * len(self._params)
+        # specified quantities (things like forces, time-varying masses, etc.)
+        self._specif = eom_class._find_dynamicsymbols(templ, self._q + self._u)
+
+        # default integration options
+        self._odeint_time = [0, 10, 100]
+        self._odeint_opts = {}
+
+    def get_parameters(self):
+        """
+        This returns the parameters which need to have values supplied.
+
+        If nothing is supplied, all parameters will be set to 0 in the settings
+        file.
+        """
+        return self._params
+
+    def give_parameters(self, param_list):
+        if len(self._params) != len(param_list):
+            raise ValueError('Supply either all or none of the parameters')
+        self._param_vals = param_list
+
+    def get_initialconditions(self):
+        """
+        Returns a list of states which need to have initial values supplied.
+        """
+        return self._q + self._u
+
+    def give_initialconditions(self, ic_list):
+        """
+        Supply the initial conditions for simulation.
+
+        If nothing is supplied, all initial conditions will be set to 0 in the
+        settings file. Also, only all or none of the I.C.'s can be specified.
+
+        Parameters
+        ==========
+
+        ic_list : list
+            A list of the values from the initial conditions, set in the order
+            specified by .get_initialconditions().
+
+        """
+
+        if len(self._init_conds) != len(ic_list):
+            raise ValueError('Supply either all or none of the initial'
+                             ' conditions')
+        self._init_conds = ic_list
+
+    def give_time_int(self, time_list, ode_opts=None):
+        """
+        Supply a list of timesteps and a dictionary with integration settings.
+
+        Parameters
+        ==========
+
+        time_list : list-like
+            A list which has t_initial, t_final, n_timesteps
+        ode_opts : dictionary
+            A dictionary which takes in the integration options for
+            scipy.integrate.odeint. Supply as {'kwarg': val}
+
+        """
+
+        self._odeint_time = time_list
+        self._odeint_opts = ode_opts
+
+    def write_settings_file(self, fname=None):
+        """
+        Write the simulation settings to a file.
+
+        Parameters
+        ==========
+
+        fname : string
+            If no filename for the settings file is supplied, a default one
+            will be created. If a filename is supplied, than it will be the
+            default one for the right hand side file.
+
+        """
+
+        mstr = MechanicsStrPrinter().doprint
+        old_str = dynamicsymbols._str
+        dynamicsymbols._str = 'p'
+        if fname is None:
+            fname = self._fname + '_settings'
+        self._settings_fname = fname + '.csv'
+        f = open("%s.csv" % fname, 'w')
+        # Now write settings to file
+        qu = self._q + self._u
+        params = self._params
+        for i, v in enumerate(qu):
+            val = self._init_conds[i]
+            f.write("%s; %f\n" % (mstr(v), val))
+        for i, v in enumerate(params):
+            val = self._param_vals[i]
+            f.write("%s; %f\n" % (mstr(v), val))
+        f.write("%s; %s\n" % ('time_list', self._odeint_time))
+        f.write("%s; %s\n" % ('odeint_opts', self._odeint_opts))
+        f.close()
+        dynamicsymbols._str = old_str
+
+    def write_rhs_file(self, code_type=None):
+        """
+        Write the file to run the integration.
+
+        Choose what language you'll use for numerical integration. Right now,
+        only SciPy is supported.
+
+        Parameters
+        ==========
+
+        code_type : string
+            The type of code output you want.
+
+        """
+
+        if code_type == None:
+            raise ValueError('A type of code output needs to be supplied')
+
+        if code_type.lower() == 'scipy':
+            self._scipy()
+        else:
+            raise ValueError('Unsupported Output Type')
+
+    def _scipy(self):
+        if self._settings_fname == None:
+            self.write_settings_file()
+        # Printer needs different settings for file output
+        mstr = MechanicsStrPrinter().doprint
+        old_str = dynamicsymbols._str
+        dynamicsymbols._str = 'p'
+        f = open("%s.py" % self._fname, 'w')
+        f.write('#!/usr/bin/env python\n\n')
+        f.write('import sys\n')
+        f.write('from numpy import *\n')
+        f.write('acos = arccos\n')
+        f.write('asin = arcsin\n')
+        f.write('atan = arctan\n\n')
+        # Writing the rhs function
+        f.write('def rhs(y, t, params):\n')
+        qu = self._q + self._u
+        params = self._params
+        l1 = '    ' + mstr(qu) + ' = y\n'
+        f.write(l1)
+        l2 = '    ' + mstr(params) + ' = params\n'
+        f.write(l2)
+
+        f.write('    M = zeros(%s)\n' % str(self._mm.shape))
+        f.write('    f = zeros(%s)\n' % str(self._f.shape))
+
+        ma, mb = self._mm.shape
+        fa = len(self._f)
+        for i in range(ma):
+            for j in range(mb):
+                f.write('    M[%s][%s] = %s\n' %
+                        (i, j, mstr(self._mm.extract([i],[j]))[1:-1]))
+        for i in range(fa):
+            f.write('    f[%s] = %s\n' % (i, mstr(self._f[i])))
+        f.write('    return linalg.solve(M, f).flatten().tolist()\n\n')
+
+        # Writing the main function, which does some time integration
+        temp = ('def main(argv=None):\n'
+                '    from scipy.integrate import odeint\n'
+                '    import matplotlib.pyplot as plt\n\n'
+                '    if argv is None:\n'
+                '        argv = sys.argv\n'
+                "    # load settings file\n"
+                '    if len(argv) == 2:\n'
+                '        settings_fname = argv[1]\n'
+                '    elif len(argv) == 1:\n'
+                "        settings_fname = '%s'\n" % self._settings_fname +
+                "    else:\n"
+                "        raise ValueError('Maximum of 1 settings file')\n\n"
+                "    f = open(settings_fname, 'r')\n"
+                "    # rearrange settings file (odeint opts, ic's, params)\n\n")
+        temp += (
+                "    param_names = %s\n" % [mstr(i) for i in params] +
+                "    state_names = %s\n" % [mstr(i) for i in qu])
+        temp += (
+                "    params_dict = {}\n"
+                "    state_dict = {}\n"
+                "    odeint_opts = {}\n"
+                "    for line in f:\n"
+                "        line = line.split('#')[0].strip()\n"
+                "        if not line:\n"
+                "            continue\n\n"
+                "        name, value = line.split(';')\n"
+                "        if name in param_names:\n"
+                "            params_dict.update({name: float(value)})\n"
+                "        elif name in state_names:\n"
+                "            state_dict.update({name: float(value)})\n"
+                "        elif name == 'time_list':\n"
+                "            time_list = value\n"
+                "        elif name == 'odeint_opts':\n"
+                "            val = value.split(',')\n"
+                "            odeint_opts = dict(zip(val[::2], val[1::2]))\n\n"
+                "    times = time_list.strip()[1:-1].split(',')\n"
+                "    t0, tf, nsteps = [float(i) for i in times]\n"
+                "    params = [params_dict[i] for i in param_names]\n"
+                "    y0 = [state_dict[i] for i in state_names]\n"
+                "    t = linspace(t0, tf, nsteps)\n"
+                "\n\n\n    # perform integration\n\n"
+                '    n = len(y0)\n'
+                '    y = odeint(rhs, y0, t, args=(params,), **odeint_opts)\n\n'
+                '    plt.plot(t, y)\n'
+                "    plt.xlabel('Time (s)')\n"
+                "    plt.ylabel('States')\n"
+                "    plt.legend(%s)\n" % str([mstr(i) for i in qu]) +
+                '    plt.show()\n\n')
+        f.write(temp)
+
+        # Writing the main function call, which may or may not be called
+        f.write('if __name__ == "__main__":\n    sys.exit(main())')
+
+        # Return printer to default settings
+        dynamicsymbols._str = old_str

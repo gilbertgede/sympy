@@ -154,9 +154,9 @@ class Kane(object):
         """Finds all non-supplied dynamicsymbols in the expressions."""
         from sympy.core.function import AppliedUndef, Derivative
         t = dynamicsymbols._t
-        return reduce(set.union, [set([i]) for j in inlist
+        return list(reduce(set.union, [set([i]) for j in inlist
             for i in j.atoms(AppliedUndef, Derivative)
-            if i.atoms() == set([t])], set()) - insyms
+            if i.atoms() == set([t])], set()) - set(insyms))
 
         temp_f = set().union(*[i.atoms(AppliedUndef) for i in inlist])
         temp_d = set().union(*[i.atoms(Derivative) for i in inlist])
@@ -168,7 +168,7 @@ class Kane(object):
     def _find_othersymbols(self, inlist, insyms=[]):
         """Finds all non-dynamic symbols in the expressions."""
         return list(reduce(set.union, [i.atoms(Symbol) for i in inlist]) -
-                    set(insyms))
+                    set(insyms) - set([dynamicsymbols._t]))
 
     def _mat_inv_mul(self, A, B):
         """Internal Function
