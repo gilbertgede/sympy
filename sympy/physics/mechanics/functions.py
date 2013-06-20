@@ -31,6 +31,8 @@ from sympy.core.basic import S
 
 def cross(vec1, vec2):
     """Cross product convenience wrapper for Vector.cross(): \n"""
+    if vec1 == 0 and (vec2 == 0 or isinstance(vec2, (Vector, Dyadic))):
+        return Vector([])
     if not isinstance(vec1, (Vector, Dyadic)):
         raise TypeError('Cross product is between two vectors')
     return vec1 ^ vec2
@@ -39,6 +41,8 @@ cross.__doc__ += Vector.cross.__doc__
 
 def dot(vec1, vec2):
     """Dot product convenience wrapper for Vector.dot(): \n"""
+    if vec1 == 0 and (vec2 == 0 or isinstance(vec2, (Vector, Dyadic))):
+        return S(0)
     if not isinstance(vec1, (Vector, Dyadic)):
         raise TypeError('Dot product is between two vectors')
     return vec1 & vec2
@@ -47,18 +51,21 @@ dot.__doc__ += Vector.dot.__doc__
 
 def express(vec, frame, frame2=None):
     """Express convenience wrapper for Vector.express(): \n"""
+    if vec == 0:
+        return Vector([])
     if not isinstance(vec, (Vector, Dyadic)):
         raise TypeError('Can only express Vectors')
     if isinstance(vec, Vector):
         return vec.express(frame)
     else:
         return vec.express(frame, frame2)
-
 express.__doc__ += Vector.express.__doc__
 
 
 def outer(vec1, vec2):
     """Outer prodcut convenience wrapper for Vector.outer():\n"""
+    if vec1 == 0 and (vec2 == 0 or isinstance(vec2, Vector)):
+        return Dyadic([])
     if not isinstance(vec1, Vector):
         raise TypeError('Outer product is between two Vectors')
     return vec1 | vec2
