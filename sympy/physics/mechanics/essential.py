@@ -403,7 +403,7 @@ class Dyadic(object):
             frame2 = frame1
         _check_frame(frame1)
         _check_frame(frame2)
-        ol = S(0)
+        ol = Dyadic([])
         for i, v in enumerate(self.args):
             ol += v[0] * (v[1].express(frame1) | v[2].express(frame2))
         return ol
@@ -437,7 +437,7 @@ class Dyadic(object):
 
         _check_frame(frame)
         t = dynamicsymbols._t
-        ol = S(0)
+        ol = Dyadic([])
         for i, v in enumerate(self.args):
             ol += (v[0].diff(t) * (v[1] | v[2]))
             ol += (v[0] * (v[1].dt(frame) | v[2]))
@@ -1428,7 +1428,7 @@ class Vector(object):
             return NotImplemented
         other = _check_vector(other)
         if other.args == []:
-            return self * S(0)
+            return Vector([])
 
         def _det(mat):
             """This is needed as a little method for to find the determinant
@@ -1519,7 +1519,7 @@ class Vector(object):
 
     def doit(self, **hints):
         """Calls .doit() on each term in the Vector"""
-        ov = S(0)
+        ov = Vector([])
         for i, v in enumerate(self.args):
             ov += Vector([(v[0].applyfunc(lambda x: x.doit(**hints)), v[1])])
         return ov
@@ -1554,7 +1554,7 @@ class Vector(object):
 
         """
 
-        outvec = S(0)
+        outvec = Vector([])
         _check_frame(otherframe)
         for i, v in enumerate(self.args):
             if v[1] == otherframe:
@@ -1623,7 +1623,7 @@ class Vector(object):
 
         """
 
-        ov = S(0)
+        ov = Vector([])
         for i, v in enumerate(self.args):
             ov += Vector([(v[0].subs(*args, **kwargs), v[1])])
         return ov
